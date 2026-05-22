@@ -24,8 +24,8 @@
     "test:coverage": "bun run --filter='*' test:coverage",
     "test:e2e": "start-server-and-test 'bun run start:api' http-get://localhost:8090/api/health 'playwright test --project=local'",
     "test:e2e:against": "playwright test --project=remote",
-    "test:api": "start-server-and-test 'bun run start:api' http-get://localhost:8090/api/health 'bru run tests/api --env local'",
-    "test:api:against": "bru run tests/api --env remote",
+    "test:api": "start-server-and-test 'bun run start:api' http-get://localhost:8090/api/health 'cd tests/api && bru run . --env local'",
+    "test:api:against": "cd tests/api && bru run . --env remote",
     "sbom": "cdxgen -o packages/api/public/sbom.cdx.json -t bun --no-recurse --required-only .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
