@@ -38,10 +38,23 @@ runs:
       env:
         BRUNO_BASE_URL: ${{ inputs.base-url }}
       run: |
+        set -euo pipefail
         if [ -n "${{ inputs.base-url }}" ]; then
-          bunx bru run tests/api --env remote
+          bunx bru run tests/api --env remote 2>&1 | tee bruno-output.txt
         else
-          bun run test:api
+          # Start the API ourselves so we see Bruno's stdout directly (start-server-and-test
+          # buffers the inner command). Kill the server on exit.
+          bun packages/api/src/server.ts > /tmp/api.log 2>&1 &
+          API_PID=$!
+          trap "kill $API_PID || true" EXIT
+          # Wait up to 30s for /api/health to respond.
+          for i in {1..60}; do
+            if curl -fs http://localhost:8090/api/health > /dev/null 2>&1; then
+              break
+            fi
+            sleep 0.5
+          done
+          bunx bru run tests/api --env local 2>&1 | tee bruno-output.txt
         fi
 
     - name: Upload Playwright report
