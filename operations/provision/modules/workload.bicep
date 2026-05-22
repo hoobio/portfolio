@@ -6,6 +6,7 @@ param shortName string
 param containerImage string
 param publicBaseUrl string
 param appVersion string
+param findingsUrl string = ''
 param tags object
 
 // --- Storage account for public-read SBOMs ---
@@ -109,6 +110,7 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
             { name: 'LOG_LEVEL', value: 'info' }
             { name: 'PUBLIC_BASE_URL', value: publicBaseUrl }
             { name: 'APP_VERSION', value: appVersion }
+            { name: 'FINDINGS_URL', value: findingsUrl }
           ]
           probes: [
             {

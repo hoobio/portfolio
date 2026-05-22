@@ -108,3 +108,37 @@ experience:
       - PowerShell
       - Azure (early adoption)
       - Service Fabric (POC)
+
+  - id: it-manager-st-philips
+    title: IT Manager
+    company: St Philips College
+    location: Alice Springs, Australia
+    workType: office
+    start: 2012-01
+    end: 2016-01
+    summary: >-
+      Thrust into the IT Manager role at 19 when the rest of the team quit
+      and I was the most senior person left. Owned end-to-end school
+      infrastructure: network, identity, telephony, virtualisation, and the
+      migration to cloud. Most of the patterns I bring to platform engineering
+      now came from problems I had to solve here without backup.
+    highlights:
+      - "Network refresh: HP 10G fibre core running BGP, replacing the legacy switching backend."
+      - "BYOD WiFi rollout with Windows NPS / RAS for 802.1X authentication across the campus."
+      - "Replaced legacy VMware with Hyper-V HA on a NAS backend, orchestrated by SCVMM."
+      - "AARNet (Australian research and education network) connection rolled out for the college."
+      - "Rebuilt Active Directory from scratch with a live cutover: domain trusts maintained during migration, all services moved (Exchange, SharePoint, Print Services, RAS, DirectAccess)."
+      - Native IPv6 rollout across the campus network.
+      - "On-prem to O365 Hybrid migration (Exchange + identity)."
+      - "Replaced the legacy phone system with a Ubiquiti UniFi-based VoIP rollout."
+    tech:
+      - Active Directory
+      - Exchange (on-prem + O365 Hybrid)
+      - SharePoint
+      - Hyper-V (SCVMM)
+      - HP Switches (BGP, 10G fibre)
+      - Windows NPS / RAS (802.1X)
+      - IPv6
+      - DirectAccess
+      - VoIP (UniFi)
+      - O365

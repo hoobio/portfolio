@@ -123,8 +123,7 @@ jobs:
       - id: deploy
         uses: ./operations/pipelines/deploy-bicep
         with:
-          resource-group: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-hoobi-portfolio' }}
-          location: ${{ vars.AZURE_LOCATION || 'australiaeast' }}
+          resource-group: ${{ vars.AZURE_RESOURCE_GROUP || 'portfolio' }}
           parameters-file: operations/variables/prod.bicepparam
           template-file: operations/provision/main.bicep
           container-image: ${{ needs.build-image.outputs.image-ref }}

@@ -1,12 +1,9 @@
-name: Deploy Bicep (subscription scope)
-description: Runs `az deployment sub create` against the portfolio Bicep template.
+name: Deploy Bicep (resource-group scope)
+description: Runs `az deployment group create` against the portfolio Bicep template.
 
 inputs:
   resource-group:
-    description: Target resource group name
-    required: true
-  location:
-    description: Azure region
+    description: Target resource group name (must already exist)
     required: true
   parameters-file:
     description: Path to the .bicepparam file
@@ -30,7 +27,7 @@ outputs:
     description: Container App public FQDN
     value: ${{ steps.deploy.outputs.fqdn }}
   storage-account:
-    description: Storage account name (use for subsequent SBOM/findings uploads)
+    description: Storage account name
     value: ${{ steps.deploy.outputs.storage }}
 
 runs:
@@ -40,7 +37,6 @@ runs:
       shell: bash
       env:
         RESOURCE_GROUP: ${{ inputs.resource-group }}
-        LOCATION: ${{ inputs.location }}
         PARAMS_FILE: ${{ inputs.parameters-file }}
         TEMPLATE_FILE: ${{ inputs.template-file }}
         CONTAINER_IMAGE: ${{ inputs.container-image }}
@@ -49,12 +45,11 @@ runs:
       run: |
         set -euo pipefail
 
-        az deployment sub create \
+        az deployment group create \
+          --resource-group "$RESOURCE_GROUP" \
           --name "hoobi-portfolio-$(date +%s)" \
-          --location "$LOCATION" \
           --template-file "$TEMPLATE_FILE" \
           --parameters "$PARAMS_FILE" \
-          --parameters "resourceGroupName=$RESOURCE_GROUP" \
           --parameters "containerImage=$CONTAINER_IMAGE" \
           --parameters "appVersion=$APP_VERSION" \
           --parameters "findingsUrl=$FINDINGS_URL" \
@@ -71,7 +66,7 @@ runs:
         {
           echo "## Deployment"
           echo
-          echo "- Site:    https://$FQDN"
+          echo "- Site: https://$FQDN"
           echo "- Storage: $STORAGE"
           [ -n "$FINDINGS_URL" ] && echo "- Findings URL: $FINDINGS_URL"
         } >> "$GITHUB_STEP_SUMMARY"

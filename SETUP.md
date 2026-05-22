@@ -24,8 +24,7 @@ Optional **environment variables** (non-sensitive, can stay as repo or env vars)
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `AZURE_RESOURCE_GROUP` | `rg-hoobi-portfolio` | Resource group name |
-| `AZURE_LOCATION` | `australiaeast` | Azure region |
+| `AZURE_RESOURCE_GROUP` | `portfolio` | Pre-existing resource group name |
 
 Optional **secrets** for Dependency-Track integration (skipped silently if not set):
 
@@ -36,19 +35,21 @@ Optional **secrets** for Dependency-Track integration (skipped silently if not s
 
 ## 3. Azure RBAC for the app registration
 
-The deploy job creates resources and uploads blobs. On the target subscription:
-
-- **Contributor** on the subscription (or the resource group if you pre-create it)
-- **Storage Blob Data Contributor** scoped at the resource group (covers future deploys' storage accounts)
+Pre-create the resource group, then scope the app registration's permissions at the group level:
 
 ```pwsh
-$sub = "<your subscription id>"
 $client = "<your app registration client id>"
-$rg = "rg-hoobi-portfolio"
+$sub    = "<your subscription id>"
+$rg     = "portfolio"
+$loc    = "australiasoutheast"
 
-az role assignment create --assignee $client --role "Contributor" --scope "/subscriptions/$sub"
+az group create --name $rg --location $loc
+
+az role assignment create --assignee $client --role "Contributor" --scope "/subscriptions/$sub/resourceGroups/$rg"
 az role assignment create --assignee $client --role "Storage Blob Data Contributor" --scope "/subscriptions/$sub/resourceGroups/$rg"
 ```
+
+Group-scoped Contributor is enough: the Bicep template is `targetScope = 'resourceGroup'` and never touches subscription-scope resources.
 
 ## 4. First deploy
 
