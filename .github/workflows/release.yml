@@ -311,7 +311,11 @@ jobs:
           ENV_NAME=$(az containerapp show -g "$RG" -n "$APP" --query "properties.environmentId" -o tsv | awk -F/ '{print $NF}')
 
           # Skip if the cert doesn't exist (first deploy before manual upload).
-          if az containerapp env certificate show -g "$RG" -n "$ENV_NAME" --certificate "$CERT_NAME" >/dev/null 2>&1; then
+          # `az containerapp env certificate` has no `show` subcommand, so we
+          # filter the list output.
+          found=$(az containerapp env certificate list -g "$RG" -n "$ENV_NAME" \
+            --query "[?name=='$CERT_NAME'].name | [0]" -o tsv 2>/dev/null || echo "")
+          if [ -n "$found" ]; then
             az containerapp hostname bind \
               --resource-group "$RG" \
               --name "$APP" \
