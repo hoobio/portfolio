@@ -22,9 +22,25 @@ export function Nav() {
             </a>
           ))}
         </nav>
-        <a href="/docs" className="text-accent-yellow hover:text-accent-orange" target="_blank" rel="noreferrer">
-          /docs
-        </a>
+        <div className="flex gap-3 items-center font-mono text-xs">
+          <a
+            href="https://github.com/hoobio/portfolio"
+            className="text-text-dim hover:text-accent-blue"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="View source on GitHub"
+          >
+            source
+          </a>
+          <a
+            href="/docs"
+            className="text-accent-yellow hover:text-accent-orange"
+            target="_blank"
+            rel="noreferrer"
+          >
+            /docs
+          </a>
+        </div>
       </div>
     </header>
   );

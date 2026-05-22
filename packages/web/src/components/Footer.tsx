@@ -15,6 +15,10 @@ export function Footer({ profile, generatedAt }: FooterProps) {
           <span className="text-accent-cyan">"built from data, served by fastify"</span>
         </div>
         <div>
+          <a href="https://github.com/hoobio/portfolio" target="_blank" rel="noreferrer">
+            source
+          </a>
+          {' · '}
           <a href="/api/portfolio" target="_blank" rel="noreferrer">/api/portfolio</a>
           {' · '}
           <a href="/llms.txt" target="_blank" rel="noreferrer">/llms.txt</a>

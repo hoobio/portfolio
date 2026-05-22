@@ -1,5 +1,7 @@
 # hoobi-portfolio
 
+> Live: **[hoobi.io](https://hoobi.io)**
+
 A living resume. The portfolio data lives in [`data/`](./data) as YAML files and is the source of truth: edit the YAML and the site updates.
 
 - Backend: Fastify + zod + auto-generated OpenAPI / Swagger UI. Serves the SPA on `/` and the API on `/api/*`.
