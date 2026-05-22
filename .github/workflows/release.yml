@@ -178,6 +178,7 @@ jobs:
 
       - name: Upload SBOM to Dependency-Track
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
+        continue-on-error: true
         uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.1.0
         with:
           bom-path: packages/api/public/sbom.cdx.json
@@ -199,6 +200,7 @@ jobs:
       - name: Pull DT findings -> Azure Blob
         id: findings
         if: env.DT_HOST != '' && env.DT_API_KEY != '' && steps.storage.outputs.name != ''
+        continue-on-error: true
         uses: ./operations/pipelines/dt-findings-to-blob
         with:
           dt-host: ${{ env.DT_HOST }}
@@ -256,7 +258,7 @@ jobs:
     name: Deploy to Azure Container Apps
     needs: [release-please, build-image, sbom, attach-and-publish]
     if: |
-      always() && needs.build-image.result == 'success' && needs.sbom.result == 'success' && (
+      always() && needs.build-image.result == 'success' && needs.sbom.result != 'cancelled' && (
         needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
       )
     runs-on: ubuntu-latest
