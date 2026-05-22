@@ -18,24 +18,21 @@ export const Contact = z
     value: z.string().min(1),
     display: z.string().min(1),
     primary: z.boolean().default(false),
-  })
-  .meta({ id: 'Contact' });
+  });
 
 export const CloudFocusEntry = z
   .object({
     name: z.string(),
     level: z.enum(['primary', 'working', 'dabble', 'limited']),
     context: z.string(),
-  })
-  .meta({ id: 'CloudFocusEntry' });
+  });
 
 export const CloudFocus = z
   .object({
     primary: z.string(),
     primaryDescription: z.string(),
     secondary: z.array(CloudFocusEntry).default([]),
-  })
-  .meta({ id: 'CloudFocus' });
+  });
 
 export const Availability = z
   .object({
@@ -46,15 +43,13 @@ export const Availability = z
       'not-looking',
     ]),
     description: z.string(),
-  })
-  .meta({ id: 'Availability' });
+  });
 
 export const Seo = z
   .object({
     description: z.string(),
     keywords: z.array(z.string()).default([]),
-  })
-  .meta({ id: 'Seo' });
+  });
 
 export const Profile = z
   .object({
@@ -83,8 +78,7 @@ export const Principle = z
     subtitle: z.string().optional(),
     summary: z.string().min(1),
     evidence: z.array(z.string()).default([]),
-  })
-  .meta({ id: 'Principle' });
+  });
 
 export const Principles = z
   .object({
@@ -102,8 +96,7 @@ export const SkillGroup = z
     title: z.string().min(1),
     level: SkillLevel,
     skills: z.array(z.string()).min(1),
-  })
-  .meta({ id: 'SkillGroup' });
+  });
 
 export const Skills = z
   .object({
@@ -128,8 +121,7 @@ export const Experience = z
     summary: z.string().min(1),
     highlights: z.array(z.string()).default([]),
     tech: z.array(z.string()).default([]),
-  })
-  .meta({ id: 'Experience' });
+  });
 
 export const ExperienceList = z
   .object({
@@ -147,8 +139,7 @@ export const ProjectLink = z
   .object({
     kind: ProjectLinkKind,
     url,
-  })
-  .meta({ id: 'ProjectLink' });
+  });
 
 export const Project = z
   .object({
@@ -162,8 +153,7 @@ export const Project = z
     highlights: z.array(z.string()).default([]),
     tech: z.array(z.string()).default([]),
     links: z.array(ProjectLink).default([]),
-  })
-  .meta({ id: 'Project' });
+  });
 
 export const Projects = z
   .object({
@@ -177,8 +167,7 @@ export const AzureService = z
   .object({
     name: z.string().min(1),
     usage: z.string().min(1),
-  })
-  .meta({ id: 'AzureService' });
+  });
 
 export const AzurePrinciple = z
   .object({
@@ -186,8 +175,7 @@ export const AzurePrinciple = z
     title: z.string().min(1),
     description: z.string().min(1),
     services: z.array(AzureService).min(1),
-  })
-  .meta({ id: 'AzurePrinciple' });
+  });
 
 export const AzureResources = z
   .object({
@@ -203,8 +191,7 @@ export const Theme = z
     title: z.string().min(1),
     description: z.string().min(1),
     receipts: z.array(z.string()).min(1),
-  })
-  .meta({ id: 'Theme' });
+  });
 
 export const WorkThemes = z
   .object({
@@ -240,8 +227,7 @@ export const ComponentVulnerability = z
     cwe: z.string().optional(),
     title: z.string().optional(),
     url: z.string().optional(),
-  })
-  .meta({ id: 'ComponentVulnerability' });
+  });
 
 export const SbomComponent = z
   .object({
@@ -251,8 +237,7 @@ export const SbomComponent = z
     purl: z.string().optional(),
     licenses: z.array(z.string()).default([]),
     vulnerabilities: z.array(ComponentVulnerability).default([]),
-  })
-  .meta({ id: 'SbomComponent' });
+  });
 
 export const SeverityCounts = z
   .object({
@@ -262,8 +247,7 @@ export const SeverityCounts = z
     low: z.number().int().nonnegative().default(0),
     info: z.number().int().nonnegative().default(0),
     unassigned: z.number().int().nonnegative().default(0),
-  })
-  .meta({ id: 'SeverityCounts' });
+  });
 
 export const VulnerabilityStatus = z
   .object({
@@ -273,8 +257,7 @@ export const VulnerabilityStatus = z
     lastScanned: z.string().optional(),
     counts: SeverityCounts,
     total: z.number().int().nonnegative(),
-  })
-  .meta({ id: 'VulnerabilityStatus' });
+  });
 
 export const SbomSummary = z
   .object({
