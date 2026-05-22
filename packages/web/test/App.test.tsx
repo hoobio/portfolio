@@ -26,10 +26,13 @@ describe('App', () => {
       </MemoryRouter>,
     );
     expect(screen.getByText(/loading portfolio/u)).toBeInTheDocument();
+    // The Nav renders the section list synchronously once the portfolio fetch
+    // resolves; we use that as the "loaded" signal rather than waiting for the
+    // Hero's character-by-character typing.
     await waitFor(() => {
-      expect(screen.getByText(portfolioFixture.profile.name)).toBeInTheDocument();
+      expect(screen.getByText('principles')).toBeInTheDocument();
     });
-    expect(screen.getByText(/Senior Platform Engineer/u)).toBeInTheDocument();
+    expect(screen.getByText('skills')).toBeInTheDocument();
   });
 
   it('renders the error UI when the fetch fails', async () => {
