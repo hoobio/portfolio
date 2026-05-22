@@ -144,7 +144,8 @@ function Page({ id, index, activeIndex, children }: PageProps) {
       data-page={id}
       className={clsx(
         'snap-center shrink-0 w-full px-6 transition-opacity duration-300 overflow-y-auto',
-        'min-h-[calc(100dvh-3.25rem)]',
+        // nav (~3.25rem) + footer (~3rem) + safety buffer
+        'min-h-[calc(100dvh-7rem)]',
         active ? 'opacity-100' : 'opacity-30 hover:opacity-60',
       )}
     >

@@ -28,11 +28,12 @@ describe('App', () => {
     expect(screen.getByText(/loading portfolio/u)).toBeInTheDocument();
     // The Nav renders the section list synchronously once the portfolio fetch
     // resolves; we use that as the "loaded" signal rather than waiting for the
-    // Hero's character-by-character typing.
+    // Hero's character-by-character typing. Multiple "principles" matches (nav
+    // link + section heading), so we use getAllByText.
     await waitFor(() => {
-      expect(screen.getByText('principles')).toBeInTheDocument();
+      expect(screen.getAllByText('principles').length).toBeGreaterThan(0);
     });
-    expect(screen.getByText('skills')).toBeInTheDocument();
+    expect(screen.getAllByText('skills').length).toBeGreaterThan(0);
   });
 
   it('renders the error UI when the fetch fails', async () => {
