@@ -12,6 +12,9 @@ tests {
   test("status is 200", function() {
     expect(res.status).to.equal(200);
   });
+  test("Cache-Control is edge-friendly", function() {
+    expect(res.headers['cache-control']).to.include('s-maxage');
+  });
   test("profile is populated", function() {
     expect(res.body.profile.name).to.be.a("string");
     expect(res.body.profile.role).to.be.a("string");

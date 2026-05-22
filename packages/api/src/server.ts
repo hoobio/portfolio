@@ -33,6 +33,21 @@ async function start() {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
+  app.addHook('onSend', async (request, reply, payload) => {
+    if (reply.getHeader('Cache-Control')) return payload;
+    const url = request.url;
+    if (url === '/api/health') {
+      reply.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else if (url.startsWith('/api/portfolio') || url.startsWith('/api/sbom')) {
+      reply.header('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+    } else if (url === '/llms.txt' || url === '/robots.txt' || url === '/sitemap.xml') {
+      reply.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+    } else if (url.startsWith('/docs')) {
+      reply.header('Cache-Control', 'public, max-age=60, s-maxage=300');
+    }
+    return payload;
+  });
+
   const { portfolio } = await loadData(config.dataDir);
   const sbomSummary = await loadSbom(config.sbomPath);
 

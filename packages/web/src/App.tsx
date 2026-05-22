@@ -1,21 +1,17 @@
 import { useEffect, useState } from 'react';
+import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import type { Portfolio } from '@hoobi-portfolio/schemas';
 import { api } from './api.js';
 import { buildPersonJsonLd, injectJsonLd } from './lib/jsonld.js';
-import { Hero } from './components/Hero.js';
-import { Principles } from './components/Principles.js';
-import { Skills } from './components/Skills.js';
-import { Experience } from './components/Experience.js';
-import { Projects } from './components/Projects.js';
-import { AzureResources } from './components/AzureResources.js';
-import { Themes } from './components/Themes.js';
-import { Sbom } from './components/Sbom.js';
-import { Footer } from './components/Footer.js';
 import { Nav } from './components/Nav.js';
+import { Footer } from './components/Footer.js';
+import { HomePage } from './pages/Home.js';
+import { SbomPage } from './pages/Sbom.js';
 
 export function App() {
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const location = useLocation();
 
   useEffect(() => {
     api
@@ -23,12 +19,17 @@ export function App() {
       .then((data) => {
         setPortfolio(data);
         injectJsonLd(buildPersonJsonLd(data));
-        document.title = `${data.profile.name} - ${data.profile.role}`;
       })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : String(err));
       });
   }, []);
+
+  useEffect(() => {
+    if (!portfolio) return;
+    const pageSuffix = location.pathname === '/sbom' ? ' - SBOM' : '';
+    document.title = `${portfolio.profile.name} - ${portfolio.profile.role}${pageSuffix}`;
+  }, [portfolio, location.pathname]);
 
   if (error) {
     return (
@@ -49,17 +50,15 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Nav />
-      <main className="mx-auto max-w-5xl px-6 pb-24">
-        <Hero profile={portfolio.profile} />
-        <Principles principles={portfolio.principles} />
-        <Skills skills={portfolio.skills} />
-        <Experience experience={portfolio.experience} />
-        <Projects projects={portfolio.projects} />
-        <AzureResources principles={portfolio.azureResources} />
-        <Themes themes={portfolio.themes} />
-        <Sbom />
+      <main className="flex-1 mx-auto max-w-6xl w-full px-6 pb-24">
+        <Routes>
+          <Route path="/" element={<HomePage portfolio={portfolio} />} />
+          <Route path="/sbom" element={<SbomPage />} />
+          <Route path="*" element={<HomePage portfolio={portfolio} />} />
+        </Routes>
+        <Outlet />
       </main>
       <Footer profile={portfolio.profile} generatedAt={portfolio.generatedAt} />
     </div>

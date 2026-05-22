@@ -8,7 +8,7 @@ export function Themes({ themes }: { themes: Portfolio['themes'] }) {
       title="recurring themes"
       caption="Higher-order patterns across the work. Each one comes with receipts."
     >
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {themes.map((t) => (
           <article key={t.id} className="rounded-lg border border-bg-elev-2 bg-bg-elev p-5">
             <h3 className="text-lg text-accent-blue">{t.title}</h3>

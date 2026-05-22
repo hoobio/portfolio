@@ -31,6 +31,24 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
+  // Edge-friendly cache headers so Cloudflare can absorb most traffic.
+  // The portfolio data is regenerated on container restart; 5-minute CDN
+  // freshness is fine. Health is always live.
+  app.addHook('onSend', async (request, reply, payload) => {
+    if (reply.getHeader('Cache-Control')) return payload;
+    const url = request.url;
+    if (url === '/api/health') {
+      reply.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else if (url.startsWith('/api/portfolio') || url.startsWith('/api/sbom')) {
+      reply.header('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+    } else if (url === '/llms.txt' || url === '/robots.txt' || url === '/sitemap.xml') {
+      reply.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+    } else if (url.startsWith('/docs')) {
+      reply.header('Cache-Control', 'public, max-age=60, s-maxage=300');
+    }
+    return payload;
+  });
+
   await app.register(fastifySwagger, {
     openapi: {
       info: {

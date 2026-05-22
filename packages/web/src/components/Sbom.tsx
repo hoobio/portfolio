@@ -51,7 +51,7 @@ const SEVERITY_COLOUR: Record<string, string> = {
   unassigned: 'text-text-mute border-bg-elev-2 bg-bg-elev',
 };
 
-export function Sbom() {
+export function Sbom({ embedded = false }: { embedded?: boolean } = {}) {
   const [sbom, setSbom] = useState<SbomSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
@@ -130,21 +130,18 @@ export function Sbom() {
       .text((d) => `${(d.data as unknown as EcosystemBucket).count}`);
   }, [sbom, buckets]);
 
-  return (
-    <Section
-      id="sbom"
-      title="sbom"
-      caption="Full CycloneDX bill of materials for this site, plus vulnerability findings from Dependency-Track when the pipeline has uploaded them."
-    >
-      {error ? (
-        <p className="text-accent-red font-mono">No SBOM available: {error}</p>
-      ) : !sbom ? (
-        <p className="text-text-dim font-mono">
-          <span className="prompt">loading sbom</span>
-          <span className="blink">_</span>
-        </p>
-      ) : (
-        <div className="space-y-4">
+  const body =
+    error ? (
+      <p className="text-accent-red font-mono">No SBOM available: {error}</p>
+    ) : !sbom ? (
+      <p className="text-text-dim font-mono">
+        <span className="prompt">loading sbom</span>
+        <span className="blink">_</span>
+      </p>
+    ) : null;
+
+  const rendered = sbom ? (
+    <div className="space-y-4">
           <SbomHeader sbom={sbom} />
           <VulnerabilityCard sbom={sbom} />
           <div className="rounded-lg border border-bg-elev-2 bg-bg-elev p-5">
@@ -179,7 +176,19 @@ export function Sbom() {
             onFilterChange={setFilter}
           />
         </div>
-      )}
+  ) : null;
+
+  if (embedded) {
+    return <div id="sbom" className="scroll-mt-16">{body ?? rendered}</div>;
+  }
+
+  return (
+    <Section
+      id="sbom"
+      title="sbom"
+      caption="Full CycloneDX bill of materials for this site, plus vulnerability findings from Dependency-Track when the pipeline has uploaded them."
+    >
+      {body ?? rendered}
     </Section>
   );
 }

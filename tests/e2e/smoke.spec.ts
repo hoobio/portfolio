@@ -21,12 +21,19 @@ test.describe('portfolio smoke', () => {
     await expect(page.getByText('Systems Administrator')).toBeVisible();
   });
 
-  test('renders the SBOM section with the bubble chart', async ({ page }) => {
-    await page.goto('/#sbom');
-    await expect(page.getByRole('heading', { name: /sbom/i })).toBeVisible();
+  test('renders the SBOM page with the bubble chart', async ({ page }) => {
+    await page.goto('/sbom');
+    await expect(page.getByRole('heading', { name: /software bill of materials/i })).toBeVisible();
     await expect(page.locator('svg[aria-label="SBOM ecosystem bubble chart"]')).toBeVisible({
       timeout: 10_000,
     });
+  });
+
+  test('Cache-Control is set on the portfolio API', async ({ request }) => {
+    const response = await request.get('/api/portfolio');
+    expect(response.status()).toBe(200);
+    const cacheControl = response.headers()['cache-control'];
+    expect(cacheControl).toMatch(/s-maxage/);
   });
 
   test('Swagger UI loads at /docs', async ({ page }) => {

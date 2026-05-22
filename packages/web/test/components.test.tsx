@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { Nav } from '../src/components/Nav.js';
+
+function withRouter(node: React.ReactNode, initialPath = '/') {
+  return <MemoryRouter initialEntries={[initialPath]}>{node}</MemoryRouter>;
+}
 import { Section } from '../src/components/Section.js';
 import { Hero } from '../src/components/Hero.js';
 import { Principles } from '../src/components/Principles.js';
@@ -14,7 +19,7 @@ import { portfolioFixture } from './fixtures.js';
 
 describe('Nav', () => {
   it('renders nav links to all sections', () => {
-    render(<Nav />);
+    render(withRouter(<Nav />));
     expect(screen.getByText('principles')).toBeInTheDocument();
     expect(screen.getByText('skills')).toBeInTheDocument();
     expect(screen.getByText('experience')).toBeInTheDocument();

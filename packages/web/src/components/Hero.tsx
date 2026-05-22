@@ -1,35 +1,66 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Profile } from '@hoobi-portfolio/schemas';
 
 interface HeroProps {
   profile: Profile;
 }
 
-const LINES = (profile: Profile): { text: string; cls?: string }[] => [
-  { text: `$ whoami`, cls: 'text-accent-red' },
-  { text: profile.name, cls: 'text-text' },
-  { text: '' },
-  { text: `$ cat ./role`, cls: 'text-accent-red' },
-  { text: profile.role, cls: 'text-accent-blue' },
-  { text: profile.location, cls: 'text-text-dim' },
-  { text: '' },
-  { text: `$ cat ./headline`, cls: 'text-accent-red' },
-  { text: profile.headline, cls: 'text-accent-cyan' },
-  { text: '' },
-  { text: `$ cat ./availability`, cls: 'text-accent-red' },
-  { text: profile.availability.description, cls: 'text-accent-yellow' },
-];
+interface Line {
+  text: string;
+  cls: string;
+  /** When true, types out one character at a time. */
+  typed?: boolean;
+}
+
+function makeLines(profile: Profile): Line[] {
+  return [
+    { text: '$ whoami', cls: 'text-accent-red', typed: true },
+    { text: profile.name, cls: 'text-text' },
+    { text: '', cls: '' },
+    { text: '$ cat ./role', cls: 'text-accent-red', typed: true },
+    { text: profile.role, cls: 'text-accent-blue' },
+    { text: profile.location, cls: 'text-text-dim' },
+    { text: '', cls: '' },
+    { text: '$ cat ./headline', cls: 'text-accent-red', typed: true },
+    { text: profile.headline, cls: 'text-accent-cyan' },
+    { text: '', cls: '' },
+    { text: '$ cat ./availability', cls: 'text-accent-red', typed: true },
+    { text: profile.availability.description, cls: 'text-accent-yellow' },
+  ];
+}
+
+const TYPE_INTERVAL_MS = 28;
+const POST_LINE_PAUSE_MS = 80;
 
 export function Hero({ profile }: HeroProps) {
-  const lines = LINES(profile);
-  const [visible, setVisible] = useState(0);
+  const lines = useMemo(() => makeLines(profile), [profile]);
+  const [index, setIndex] = useState(0);
+  const [typedChars, setTypedChars] = useState(0);
+  const done = index >= lines.length;
+  const currentLine = lines[index];
+  const isTypingCurrent = !done && Boolean(currentLine?.typed) && typedChars < (currentLine?.text.length ?? 0);
 
   useEffect(() => {
-    if (visible >= lines.length) return;
-    const delay = lines[visible]?.text === '' ? 60 : 140;
-    const t = window.setTimeout(() => setVisible((v) => v + 1), delay);
+    if (done) return;
+    const line = lines[index];
+    if (!line) return;
+
+    if (line.typed) {
+      if (typedChars < line.text.length) {
+        const t = window.setTimeout(() => setTypedChars((c) => c + 1), TYPE_INTERVAL_MS);
+        return () => window.clearTimeout(t);
+      }
+      const t = window.setTimeout(() => {
+        setIndex((i) => i + 1);
+        setTypedChars(0);
+      }, POST_LINE_PAUSE_MS);
+      return () => window.clearTimeout(t);
+    }
+
+    // Non-typed lines: reveal whole-line after a short beat.
+    const t = window.setTimeout(() => setIndex((i) => i + 1), POST_LINE_PAUSE_MS);
     return () => window.clearTimeout(t);
-  }, [visible, lines]);
+  }, [index, typedChars, done, lines]);
 
   return (
     <section id="top" className="pt-12 md:pt-20">
@@ -37,20 +68,32 @@ export function Hero({ profile }: HeroProps) {
         <WindowsTerminalChrome title="PowerShell" />
         <div className="p-6 md:p-8 font-mono text-sm md:text-base leading-relaxed">
           <PromptHeader profile={profile} />
-          {lines.slice(0, visible).map((line, idx) => (
-            <div key={idx} className={line.cls ?? 'text-text'}>
+          {lines.slice(0, index).map((line, idx) => (
+            <div key={idx} className={line.cls || 'text-text'}>
               {line.text === '' ? ' ' : line.text}
             </div>
           ))}
-          {visible < lines.length ? (
+          {!done && currentLine?.typed ? (
+            <div className={currentLine.cls}>
+              {currentLine.text.slice(0, typedChars)}
+              <span aria-hidden className="text-text blink">
+                ▌
+              </span>
+            </div>
+          ) : null}
+          {done ? (
+            <div className="mt-2 text-accent-red">
+              ${' '}
+              <span aria-hidden className="blink text-text">
+                ▌
+              </span>
+            </div>
+          ) : null}
+          {!done && !isTypingCurrent && currentLine && !currentLine.typed ? (
             <span aria-hidden className="text-accent-blue blink">
               ▌
             </span>
-          ) : (
-            <div className="mt-2 text-accent-red">
-              $ <span className="blink text-text">▌</span>
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
       <div className="mt-8 grid gap-4 md:grid-cols-3 font-mono text-sm">
@@ -79,9 +122,8 @@ export function Hero({ profile }: HeroProps) {
 function WindowsTerminalChrome({ title }: { title: string }) {
   return (
     <div className="flex items-stretch select-none">
-      {/* Tab strip */}
       <div className="flex items-stretch min-w-0 flex-1">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-elev border-b border-bg-elev-2/30 text-text text-xs font-mono min-w-0">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-elev border-b border-bg-elev-2 text-text text-xs font-mono min-w-0">
           <PowerShellIcon />
           <span className="truncate">{title}</span>
           <button
@@ -127,7 +169,6 @@ function WindowsTerminalChrome({ title }: { title: string }) {
           </button>
         </div>
       </div>
-      {/* Window controls */}
       <div className="flex items-stretch text-text-mute">
         <WindowButton ariaLabel="Minimise">
           <path d="M2 8 H12" stroke="currentColor" strokeWidth="1" fill="none" />
@@ -136,7 +177,13 @@ function WindowsTerminalChrome({ title }: { title: string }) {
           <rect x="2.5" y="2.5" width="9" height="9" stroke="currentColor" strokeWidth="1" fill="none" />
         </WindowButton>
         <WindowButton ariaLabel="Close" danger>
-          <path d="M2 2 L12 12 M12 2 L2 12" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" />
+          <path
+            d="M2 2 L12 12 M12 2 L2 12"
+            stroke="currentColor"
+            strokeWidth="1"
+            fill="none"
+            strokeLinecap="round"
+          />
         </WindowButton>
       </div>
     </div>
@@ -159,7 +206,9 @@ function WindowButton({
       tabIndex={-1}
       className={
         'px-3 flex items-center justify-center transition-colors ' +
-        (danger ? 'hover:bg-accent-red/70 hover:text-white' : 'hover:bg-bg-elev-2/60 hover:text-text')
+        (danger
+          ? 'hover:bg-accent-red hover:text-white'
+          : 'hover:bg-bg-elev-2 hover:text-text')
       }
     >
       <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
@@ -171,16 +220,34 @@ function WindowButton({
 
 function PowerShellIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden className="shrink-0 text-accent-blue">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      aria-hidden
+      className="shrink-0 text-accent-blue"
+    >
       <rect x="0" y="0" width="14" height="14" rx="1.5" fill="currentColor" fillOpacity="0.12" />
-      <path d="M3 3 L7 7 L3 11" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M7 11 H11" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+      <path
+        d="M3 3 L7 7 L3 11"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7 11 H11"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
 
 function PromptHeader({ profile }: { profile: Profile }) {
-  // Faux PowerShell preamble that appears before the typed-out lines.
   return (
     <div className="mb-3 text-text-dim text-xs md:text-sm">
       <div>

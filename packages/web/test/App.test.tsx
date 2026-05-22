@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { App } from '../src/App.js';
 import { portfolioFixture, sbomFixture } from './fixtures.js';
 
@@ -19,7 +20,11 @@ function mockFetch() {
 describe('App', () => {
   it('shows a loading state and then the portfolio', async () => {
     vi.stubGlobal('fetch', mockFetch());
-    render(<App />);
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
     expect(screen.getByText(/loading portfolio/u)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(portfolioFixture.profile.name)).toBeInTheDocument();
@@ -32,7 +37,11 @@ describe('App', () => {
       'fetch',
       vi.fn(async () => ({ ok: false, status: 503 })),
     );
-    render(<App />);
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
     await waitFor(() => {
       expect(screen.getByText(/Failed to load portfolio data/u)).toBeInTheDocument();
     });
