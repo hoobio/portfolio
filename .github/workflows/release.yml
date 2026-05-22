@@ -3,8 +3,6 @@ name: Release
 on:
   push:
     branches: [main]
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -41,15 +39,11 @@ jobs:
   build-image:
     name: Build + push container
     needs: release-please
-    if: |
-      always() && (
-        (github.event_name == 'push' && needs.release-please.outputs.release_created == 'true') ||
-        github.event_name == 'release' ||
-        github.event_name == 'workflow_dispatch'
-      )
+    if: needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     outputs:
       image-ref: ${{ steps.meta.outputs.ref }}
+      image: ${{ steps.meta.outputs.image }}
       version: ${{ steps.version.outputs.value }}
       digest: ${{ steps.push.outputs.digest }}
     steps:
@@ -60,9 +54,6 @@ jobs:
         run: |
           if [[ -n "${{ needs.release-please.outputs.version || '' }}" ]]; then
             v="${{ needs.release-please.outputs.version }}"
-          elif [[ "${{ github.event_name }}" == "release" ]]; then
-            v="${{ github.event.release.tag_name }}"
-            v="${v#v}"
           else
             v="$(cat version.txt | tr -d '[:space:]')-sha.$(echo ${{ github.sha }} | cut -c1-7)"
           fi
@@ -104,10 +95,170 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
+  sbom:
+    name: SBOM + Dependency-Track findings
+    needs: [release-please, build-image]
+    if: always() && needs.build-image.result == 'success'
+    runs-on: ubuntu-latest
+    environment: azure
+    outputs:
+      findings-url: ${{ steps.findings.outputs.blob-url }}
+      storage-account: ${{ steps.storage.outputs.name }}
+    env:
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'portfolio' }}
+      DT_HOST: ${{ secrets.DT_HOST }}
+      DT_API_KEY: ${{ secrets.DT_API_KEY }}
+      DT_DOMAIN: portfolio
+      DT_SYSTEM: hoobi-portfolio
+      DT_COMPONENT: site
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./operations/pipelines/install-deps
+      - run: bun run sbom
+
+      - name: Upload SBOM artifact (for release attachment + downstream jobs)
+        uses: actions/upload-artifact@v7
+        with:
+          name: sbom
+          path: packages/api/public/sbom.cdx.json
+          if-no-files-found: error
+
+      - name: Attest SBOM
+        uses: actions/attest-sbom@v3
+        with:
+          subject-path: packages/api/public/sbom.cdx.json
+          sbom-path: packages/api/public/sbom.cdx.json
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Discover existing storage account in RG
+        id: storage
+        shell: bash
+        run: |
+          set -euo pipefail
+          name=$(az storage account list \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query "[?starts_with(name, 'hoobiportfoliosbom')].name | [0]" \
+            -o tsv 2>/dev/null || echo "")
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          if [ -n "$name" ]; then
+            echo "Found storage account: $name"
+          else
+            echo "::notice::No portfolio storage account yet (first deploy?). Skipping blob uploads."
+          fi
+
+      - name: Upload SBOM to Azure Blob (public-read)
+        if: steps.storage.outputs.name != ''
+        env:
+          VERSION: ${{ needs.build-image.outputs.version }}
+          STORAGE: ${{ steps.storage.outputs.name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          az storage blob upload \
+            --account-name "$STORAGE" --container-name sbom \
+            --name "${VERSION}/sbom.cdx.json" \
+            --file packages/api/public/sbom.cdx.json \
+            --content-type application/vnd.cyclonedx+json \
+            --overwrite --auth-mode login
+          az storage blob upload \
+            --account-name "$STORAGE" --container-name sbom \
+            --name "latest/sbom.cdx.json" \
+            --file packages/api/public/sbom.cdx.json \
+            --content-type application/vnd.cyclonedx+json \
+            --overwrite --auth-mode login
+
+      - name: Upload SBOM to Dependency-Track
+        if: env.DT_HOST != '' && env.DT_API_KEY != ''
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.1.0
+        with:
+          bom-path: packages/api/public/sbom.cdx.json
+          upload-artifact: 'false'
+          server-url: https://${{ env.DT_HOST }}
+          api-key: ${{ env.DT_API_KEY }}
+          domain: ${{ env.DT_DOMAIN }}
+          system: ${{ env.DT_SYSTEM }}
+          component: ${{ env.DT_COMPONENT }}
+          channel: ${{ needs.release-please.outputs.release_created == 'true' && 'release' || 'main' }}
+          default-branch: main
+          project-version: ${{ needs.build-image.outputs.version }}
+          project-tags: repo=${{ github.repository }},commit=${{ github.sha }},run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          mark-latest: ${{ needs.release-please.outputs.release_created == 'true' }}
+          prune-stale-children: ${{ needs.release-please.outputs.release_created != 'true' }}
+          keep: '10'
+          ci-keep: '3'
+
+      - name: Pull DT findings -> Azure Blob
+        id: findings
+        if: env.DT_HOST != '' && env.DT_API_KEY != '' && steps.storage.outputs.name != ''
+        uses: ./operations/pipelines/dt-findings-to-blob
+        with:
+          dt-host: ${{ env.DT_HOST }}
+          dt-api-key: ${{ env.DT_API_KEY }}
+          project-name: ${{ env.DT_COMPONENT }}
+          project-version: ${{ needs.build-image.outputs.version }}
+          azure-storage-account: ${{ steps.storage.outputs.name }}
+
+  attach-and-publish:
+    name: Attach artifacts + publish draft release
+    needs: [release-please, build-image, sbom]
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download SBOM
+        uses: actions/download-artifact@v8
+        with:
+          name: sbom
+          path: release
+
+      - name: Attach SBOM to draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" release/sbom.cdx.json --clobber --repo "${{ github.repository }}"
+
+      - name: Append trust signal to release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+          IMAGE_REF: ${{ needs.build-image.outputs.image-ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BODY=$(gh release view "$TAG" --repo "${{ github.repository }}" --json body --jq '.body // ""')
+          TRUST=$'\n\n---\n'
+          TRUST+="> ✅ Image: \`${IMAGE_REF}\`"$'\n'
+          TRUST+="> 📦 SBOM attested · CycloneDX format · uploaded to Dependency-Track when configured"$'\n'
+          TRUST+="> 🛡️ [CodeQL not enabled yet]"
+          gh release edit "$TAG" --repo "${{ github.repository }}" --notes "${BODY}${TRUST}"
+
+      - name: Publish draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        shell: bash
+        run: gh release edit "$TAG" --repo "${{ github.repository }}" --draft=false
+
   deploy:
     name: Deploy to Azure Container Apps
-    needs: build-image
-    if: always() && needs.build-image.result == 'success'
+    needs: [release-please, build-image, sbom, attach-and-publish]
+    if: |
+      always() && needs.build-image.result == 'success' && needs.sbom.result == 'success' && (
+        needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
+      )
     runs-on: ubuntu-latest
     environment: azure
     outputs:
@@ -128,9 +279,10 @@ jobs:
           template-file: operations/provision/main.bicep
           container-image: ${{ needs.build-image.outputs.image-ref }}
           app-version: ${{ needs.build-image.outputs.version }}
+          findings-url: ${{ needs.sbom.outputs.findings-url || '' }}
 
   pdt-prod:
-    name: PDT (production) - Playwright + Bruno
+    name: PDT (production)
     needs: deploy
     if: always() && needs.deploy.result == 'success' && needs.deploy.outputs.fqdn != ''
     runs-on: ubuntu-latest
@@ -140,58 +292,3 @@ jobs:
       - uses: ./operations/pipelines/test-pdt
         with:
           base-url: https://${{ needs.deploy.outputs.fqdn }}
-
-  sbom:
-    name: SBOM + Dependency-Track findings
-    needs: [build-image, deploy]
-    if: always() && needs.build-image.result == 'success'
-    runs-on: ubuntu-latest
-    environment: azure
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./operations/pipelines/install-deps
-      - run: bun run sbom
-      - uses: actions/upload-artifact@v7
-        with:
-          name: sbom
-          path: packages/api/public/sbom.cdx.json
-          if-no-files-found: error
-      - uses: actions/attest-sbom@v3
-        with:
-          subject-path: packages/api/public/sbom.cdx.json
-          sbom-path: packages/api/public/sbom.cdx.json
-      - uses: azure/login@v2
-        if: needs.deploy.outputs.storage != ''
-        with:
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: Upload SBOM to Azure Blob (public-read)
-        if: needs.deploy.outputs.storage != ''
-        env:
-          VERSION: ${{ needs.build-image.outputs.version }}
-          STORAGE: ${{ needs.deploy.outputs.storage }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          az storage blob upload \
-            --account-name "$STORAGE" --container-name sbom \
-            --name "${VERSION}/sbom.cdx.json" \
-            --file packages/api/public/sbom.cdx.json \
-            --content-type application/vnd.cyclonedx+json \
-            --overwrite --auth-mode login
-          az storage blob upload \
-            --account-name "$STORAGE" --container-name sbom \
-            --name "latest/sbom.cdx.json" \
-            --file packages/api/public/sbom.cdx.json \
-            --content-type application/vnd.cyclonedx+json \
-            --overwrite --auth-mode login
-      - name: Upload SBOM to Dependency-Track + pull findings -> Blob
-        if: needs.deploy.outputs.storage != '' && env.DT_HOST != ''
-        env:
-          DT_HOST: ${{ secrets.DT_HOST }}
-          DT_API_KEY: ${{ secrets.DT_API_KEY }}
-        shell: bash
-        run: |
-          echo "TODO: integrate hoobio/pipeline-tools/job/upload-sbom-to-dependency-track"
-          echo "Then call ./operations/pipelines/dt-findings-to-blob to write findings.json"

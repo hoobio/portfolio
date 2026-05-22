@@ -35,10 +35,53 @@ jobs:
   test:
     name: Test + coverage
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
       - uses: ./operations/pipelines/install-deps
       - run: bun run test:coverage
+
+      - name: Coverage summary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## Coverage summary"
+            echo
+            echo "| package | statements | branches | functions | lines |"
+            echo "|---|---:|---:|---:|---:|"
+            for f in packages/*/coverage/coverage-summary.json; do
+              [ -f "$f" ] || continue
+              pkg=$(echo "$f" | cut -d/ -f2)
+              s=$(jq -r '.total.statements.pct' "$f")
+              b=$(jq -r '.total.branches.pct' "$f")
+              fn=$(jq -r '.total.functions.pct' "$f")
+              l=$(jq -r '.total.lines.pct' "$f")
+              printf '| %s | %s%% | %s%% | %s%% | %s%% |\n' "$pkg" "$s" "$b" "$fn" "$l"
+            done
+          } | tee /tmp/coverage.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BODY=$(cat /tmp/coverage.md)$'\n\n<!-- coverage-bot -->'
+          existing=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate --jq '.[] | select(.body | contains("<!-- coverage-bot -->")) | .id' 2>/dev/null | head -1 || true)
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/${{ github.repository }}/issues/comments/$existing" -f body="$BODY" > /dev/null
+            echo "Updated coverage comment $existing"
+          else
+            gh pr comment "$PR" --body "$BODY"
+            echo "Created coverage comment"
+          fi
+
       - if: always()
         uses: actions/upload-artifact@v7
         with:
