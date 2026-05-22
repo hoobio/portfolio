@@ -5,6 +5,7 @@ export function AzureResources({ principles }: { principles: Portfolio['azureRes
   return (
     <Section
       id="azure"
+      apiId="azure-resources"
       title="azure resources by principle"
       caption="Azure services grouped by the architectural intent they serve, not the product category."
     >

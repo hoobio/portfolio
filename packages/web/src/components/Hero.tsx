@@ -63,10 +63,10 @@ export function Hero({ profile }: HeroProps) {
   }, [index, typedChars, done, lines]);
 
   return (
-    <section id="top" className="pt-12 md:pt-20">
+    <section id="top" className="pt-8 md:pt-12">
       <div className="rounded-md border border-bg-elev-2 bg-bg-elev overflow-hidden">
         <WindowsTerminalChrome title="PowerShell" />
-        <div className="p-6 md:p-8 font-mono text-sm md:text-base leading-relaxed">
+        <div className="p-6 md:p-8 font-mono text-sm md:text-base leading-relaxed min-h-[32.5rem]">
           <PromptHeader profile={profile} />
           {lines.slice(0, index).map((line, idx) => (
             <div key={idx} className={line.cls || 'text-text'}>

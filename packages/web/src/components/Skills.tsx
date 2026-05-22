@@ -15,9 +15,9 @@ export function Skills({ skills }: { skills: Portfolio['skills'] }) {
       title="skills"
       caption="Capability groups, by depth. Deep is years-in-anger; working is shipped with; familiar is enough to be useful."
     >
-      <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-2 px-2 scroll-smooth">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {skills.map((g) => (
-          <div key={g.id} className="snap-start shrink-0 w-72 md:w-80 rounded-lg border border-bg-elev-2 bg-bg-elev p-4">
+          <div key={g.id} className="rounded-lg border border-bg-elev-2 bg-bg-elev p-4">
             <div className="flex items-baseline justify-between gap-2">
               <h3 className="text-base text-accent-yellow">
                 <span className="text-text-mute">- </span>

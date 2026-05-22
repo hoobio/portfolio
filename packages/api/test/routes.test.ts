@@ -32,6 +32,7 @@ describe('API routes', () => {
       sbomSummary: sbomSummaryFixture,
       sbomPath,
       webDistDir,
+      dataDir: workDir,
       version: '1.0.0-test',
       baseUrl: 'https://example.test',
     });
@@ -155,6 +156,7 @@ describe('SBOM route without summary', () => {
       sbomSummary: undefined,
       sbomPath: '/non/existent/path.json',
       webDistDir: '/non/existent/dir',
+      dataDir: '/non/existent/data',
       version: '1.0.0-test',
       baseUrl: '',
     });

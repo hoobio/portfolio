@@ -20,6 +20,7 @@ export interface BuildAppOptions {
   sbomSummary: SbomSummary | undefined;
   sbomPath: string;
   webDistDir: string;
+  dataDir: string;
   version: string;
   baseUrl: string;
   logger?: boolean;
@@ -79,7 +80,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
   await app.register(
     async (api) => {
       await api.register(healthRoutes, { version: opts.version });
-      await api.register(portfolioRoutes, { portfolio: opts.portfolio });
+      await api.register(portfolioRoutes, { portfolio: opts.portfolio, dataDir: opts.dataDir });
       await api.register(sbomRoutes, { sbomPath: opts.sbomPath, summary: opts.sbomSummary });
     },
     { prefix: '/api' },

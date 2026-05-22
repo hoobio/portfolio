@@ -81,7 +81,7 @@ async function start() {
   await app.register(
     async (api) => {
       await api.register(healthRoutes, { version: config.version });
-      await api.register(portfolioRoutes, { portfolio });
+      await api.register(portfolioRoutes, { portfolio, dataDir: config.dataDir });
       await api.register(sbomRoutes, { sbomPath: config.sbomPath, summary: sbomSummary });
     },
     { prefix: '/api' },

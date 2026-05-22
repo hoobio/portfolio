@@ -22,11 +22,11 @@ export function Projects({ projects }: { projects: Portfolio['projects'] }) {
       title="projects"
       caption="Open-source maintainership, personal projects, and architectural work I'm allowed to talk about."
     >
-      <ul className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-2 px-2 scroll-smooth">
+      <ul className="grid gap-4 md:grid-cols-2">
         {projects.map((p) => (
           <li
             key={p.id}
-            className="snap-start shrink-0 w-80 md:w-96 rounded-lg border border-bg-elev-2 bg-bg-elev p-5 flex flex-col"
+            className="rounded-lg border border-bg-elev-2 bg-bg-elev p-5 flex flex-col"
           >
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="text-lg text-accent-blue">{p.title}</h3>
