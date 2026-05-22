@@ -283,6 +283,40 @@ jobs:
           app-version: ${{ needs.build-image.outputs.version }}
           findings-url: ${{ needs.sbom.outputs.findings-url || '' }}
 
+      # Bicep ingress overwrites custom-domain bindings on each deploy. Re-bind
+      # hoobi.io to the pre-uploaded Cloudflare Origin CA cert so the proxied
+      # CNAME from Cloudflare keeps working.
+      - name: Re-bind custom hostname + cert
+        env:
+          RG: ${{ vars.AZURE_RESOURCE_GROUP || 'portfolio' }}
+          APP: hoobiportfolio-app
+          HOSTNAME: ${{ vars.CUSTOM_HOSTNAME || 'hoobi.io' }}
+          CERT_NAME: ${{ vars.ORIGIN_CERT_NAME || 'hoobi-io-origin-ca' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # `hostname add` is idempotent; bind the cert (also idempotent).
+          az containerapp hostname add \
+            --resource-group "$RG" \
+            --name "$APP" \
+            --hostname "$HOSTNAME" || true
+
+          ENV_NAME=$(az containerapp show -g "$RG" -n "$APP" --query "properties.environmentId" -o tsv | awk -F/ '{print $NF}')
+
+          # Skip if the cert doesn't exist (first deploy before manual upload).
+          if az containerapp env certificate show -g "$RG" -n "$ENV_NAME" --certificate "$CERT_NAME" >/dev/null 2>&1; then
+            az containerapp hostname bind \
+              --resource-group "$RG" \
+              --name "$APP" \
+              --hostname "$HOSTNAME" \
+              --environment "$ENV_NAME" \
+              --certificate "$CERT_NAME" \
+              --validation-method TXT || true
+            echo "Bound $HOSTNAME -> $CERT_NAME"
+          else
+            echo "::warning::Cert '$CERT_NAME' not found in env '$ENV_NAME'; skipping hostname bind"
+          fi
+
   pdt-prod:
     name: PDT (production)
     needs: deploy
