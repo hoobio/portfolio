@@ -144,30 +144,29 @@ export function Sbom({ embedded = false }: { embedded?: boolean } = {}) {
     <div className="space-y-4">
           <SbomHeader sbom={sbom} />
           <VulnerabilityCard sbom={sbom} />
-          <div className="rounded-lg border border-bg-elev-2 bg-bg-elev p-5">
-            <h3 className="font-mono text-sm text-accent-yellow">
-              <span className="text-text-mute">## </span>by ecosystem
-            </h3>
-            <svg
-              ref={svgRef}
-              className="mt-3 w-full"
-              role="img"
-              aria-label="SBOM ecosystem bubble chart"
-            />
-            <div className="mt-3 grid gap-2 md:grid-cols-3 font-mono text-xs">
-              {buckets.map((b) => (
-                <div key={b.name} className="flex items-center gap-2">
-                  <span
-                    aria-hidden
-                    className="inline-block size-2 rounded-full"
-                    style={{ background: ECO_COLOUR(b.name) }}
-                  />
-                  <span className="text-text">{b.name}</span>
-                  <span className="text-text-dim ml-auto">{b.count}</span>
-                </div>
-              ))}
+          {buckets.length > 1 ? (
+            <div className="rounded-lg border border-bg-elev-2 bg-bg-elev p-5">
+              <svg
+                ref={svgRef}
+                className="w-full"
+                role="img"
+                aria-label="SBOM ecosystem bubble chart"
+              />
+              <div className="mt-3 grid gap-2 md:grid-cols-3 font-mono text-xs">
+                {buckets.map((b) => (
+                  <div key={b.name} className="flex items-center gap-2">
+                    <span
+                      aria-hidden
+                      className="inline-block size-2 rounded-full"
+                      style={{ background: ECO_COLOUR(b.name) }}
+                    />
+                    <span className="text-text">{b.name}</span>
+                    <span className="text-text-dim ml-auto">{b.count}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
 
           <ComponentTable
             components={filteredComponents}

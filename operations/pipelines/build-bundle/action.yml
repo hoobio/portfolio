@@ -13,6 +13,14 @@ runs:
       shell: bash
       run: bun run build
 
+    - name: Stage SPA into api/public/web (for start:api to serve)
+      shell: bash
+      run: |
+        set -euo pipefail
+        rm -rf packages/api/public/web
+        mkdir -p packages/api/public/web
+        cp -R packages/web/dist/. packages/api/public/web/
+
     - name: bun run sbom
       shell: bash
       run: bun run sbom
