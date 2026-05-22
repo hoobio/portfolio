@@ -70,6 +70,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./operations/pipelines/install-deps
+      - uses: ./operations/pipelines/build-bundle
       - uses: ./operations/pipelines/test-pdt
         with:
           base-url: ''

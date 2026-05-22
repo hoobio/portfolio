@@ -68,5 +68,5 @@ runs:
           echo
           echo "- Site: https://$FQDN"
           echo "- Storage: $STORAGE"
-          [ -n "$FINDINGS_URL" ] && echo "- Findings URL: $FINDINGS_URL"
+          if [ -n "$FINDINGS_URL" ]; then echo "- Findings URL: $FINDINGS_URL"; fi
         } >> "$GITHUB_STEP_SUMMARY"

@@ -26,7 +26,7 @@ export default defineConfig({
       name: 'local',
       use: {
         ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:5173',
+        baseURL: 'http://localhost:8090',
       },
     },
     {
