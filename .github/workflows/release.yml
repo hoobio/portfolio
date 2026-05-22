@@ -291,7 +291,7 @@ jobs:
           RG: ${{ vars.AZURE_RESOURCE_GROUP || 'portfolio' }}
           APP: hoobiportfolio-app
           HOSTNAME: ${{ vars.CUSTOM_HOSTNAME || 'hoobi.io' }}
-          CERT_NAME: ${{ vars.ORIGIN_CERT_NAME || 'hoobi-io-origin-ca' }}
+          CERT_NAME: ${{ vars.ORIGIN_CERT_NAME || 'cloudflare-origin' }}
         shell: bash
         run: |
           set -euo pipefail
