@@ -17,3 +17,6 @@ coverage/
 .idea/
 packages/api/public/sbom.cdx.json
 packages/api/public/web/
+playwright-report/
+test-results/
+playwright/.cache/

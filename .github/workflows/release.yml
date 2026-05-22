@@ -129,6 +129,18 @@ jobs:
           container-image: ${{ needs.build-image.outputs.image-ref }}
           app-version: ${{ needs.build-image.outputs.version }}
 
+  pdt-prod:
+    name: PDT (production) - Playwright + Bruno
+    needs: deploy
+    if: always() && needs.deploy.result == 'success' && needs.deploy.outputs.fqdn != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./operations/pipelines/install-deps
+      - uses: ./operations/pipelines/test-pdt
+        with:
+          base-url: https://${{ needs.deploy.outputs.fqdn }}
+
   sbom:
     name: SBOM + Dependency-Track findings
     needs: [build-image, deploy]

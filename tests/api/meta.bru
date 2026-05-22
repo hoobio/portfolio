@@ -1,0 +1,18 @@
+meta {
+  name: meta-endpoints
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/llms.txt
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("text contains the name", function() {
+    expect(res.body).to.include("Alex Hill");
+  });
+}

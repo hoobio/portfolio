@@ -1,0 +1,32 @@
+meta {
+  name: portfolio
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/portfolio
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("profile is populated", function() {
+    expect(res.body.profile.name).to.be.a("string");
+    expect(res.body.profile.role).to.be.a("string");
+  });
+  test("collections are non-empty", function() {
+    expect(res.body.principles.length).to.be.greaterThan(0);
+    expect(res.body.skills.length).to.be.greaterThan(0);
+    expect(res.body.experience.length).to.be.greaterThan(0);
+    expect(res.body.projects.length).to.be.greaterThan(0);
+    expect(res.body.azureResources.length).to.be.greaterThan(0);
+    expect(res.body.themes.length).to.be.greaterThan(0);
+  });
+  test("current role is flagged", function() {
+    const currentRole = res.body.experience.find(r => r.current);
+    expect(currentRole).to.exist;
+    expect(currentRole.end).to.equal("present");
+  });
+}

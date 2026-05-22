@@ -62,3 +62,14 @@ jobs:
             packages/web/dist/
             packages/api/public/sbom.cdx.json
           if-no-files-found: error
+
+  pdt-local:
+    name: PDT (local dev server) - Playwright + Bruno
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./operations/pipelines/install-deps
+      - uses: ./operations/pipelines/test-pdt
+        with:
+          base-url: ''

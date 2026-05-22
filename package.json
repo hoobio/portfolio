@@ -21,14 +21,21 @@
     "typecheck": "bun run --filter='*' typecheck",
     "test": "bun run --filter='*' test",
     "test:coverage": "bun run --filter='*' test:coverage",
+    "test:e2e": "start-server-and-test 'bun run dev:api' http-get://localhost:8090/api/health 'bun run dev:web' http-get://localhost:5173 'playwright test --project=local'",
+    "test:e2e:against": "playwright test --project=remote",
+    "test:api": "start-server-and-test 'bun run dev:api' http-get://localhost:8090/api/health 'bru run tests/api --env local'",
+    "test:api:against": "bru run tests/api --env remote",
     "sbom": "cdxgen -o packages/api/public/sbom.cdx.json -t bun --no-recurse --required-only .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@cyclonedx/cdxgen": "12.4.1",
+    "@playwright/test": "1.60.0",
+    "@usebruno/cli": "3.4.0",
     "oxlint": "1.66.0",
     "prettier": "3.8.3",
+    "start-server-and-test": "3.0.5",
     "typescript": "6.0.3"
   }
 }

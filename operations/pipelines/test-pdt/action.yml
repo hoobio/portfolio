@@ -1,0 +1,53 @@
+name: PDT - Playwright + Bruno
+description: |
+  Production Deployment Tests. Runs Playwright UI tests and Bruno API tests
+  against a base URL. If `base-url` is set, runs the `remote` projects against
+  it. Otherwise spins up the dev server and runs the `local` projects.
+
+inputs:
+  base-url:
+    description: Remote URL to test (omit for local dev-server run)
+    required: false
+    default: ''
+  install-playwright-browsers:
+    description: Run `playwright install --with-deps`
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Install Playwright browsers
+      if: ${{ inputs.install-playwright-browsers == 'true' }}
+      shell: bash
+      run: bunx playwright install --with-deps chromium
+
+    - name: Playwright UI tests
+      shell: bash
+      env:
+        PLAYWRIGHT_BASE_URL: ${{ inputs.base-url }}
+      run: |
+        if [ -n "${{ inputs.base-url }}" ]; then
+          bunx playwright test --project=remote
+        else
+          bun run test:e2e
+        fi
+
+    - name: Bruno API tests
+      shell: bash
+      env:
+        BRUNO_BASE_URL: ${{ inputs.base-url }}
+      run: |
+        if [ -n "${{ inputs.base-url }}" ]; then
+          bunx bru run tests/api --env remote
+        else
+          bun run test:api
+        fi
+
+    - name: Upload Playwright report
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: playwright-report-${{ github.run_id }}-${{ github.run_attempt }}
+        path: playwright-report/
+        if-no-files-found: ignore

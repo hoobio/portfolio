@@ -1,0 +1,24 @@
+meta {
+  name: sbom
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/sbom
+}
+
+tests {
+  test("status is 200 or 404 (when missing)", function() {
+    expect([200, 404]).to.include(res.status);
+  });
+  test("when present, shape is right", function() {
+    if (res.status === 200) {
+      expect(res.body.bomFormat).to.equal("CycloneDX");
+      expect(res.body.componentCount).to.be.a("number");
+      expect(Array.isArray(res.body.components)).to.equal(true);
+      expect(res.body.vulnerabilities).to.exist;
+      expect(res.body.vulnerabilities.counts).to.exist;
+    }
+  });
+}
