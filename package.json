@@ -26,7 +26,7 @@
     "test:e2e:against": "playwright test --project=remote",
     "test:api": "start-server-and-test 'bun run start:api' http-get://localhost:8090/api/health 'cd tests/api && bru run . --env local'",
     "test:api:against": "cd tests/api && bru run . --env remote",
-    "sbom": "cdxgen -o packages/api/public/sbom.cdx.json -t bun --no-recurse --required-only .",
+    "sbom": "cdxgen -o packages/api/public/sbom.cdx.json -t bun --no-recurse --required-only --spec-version 1.6 .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
