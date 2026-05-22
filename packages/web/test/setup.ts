@@ -17,6 +17,24 @@ if (typeof window !== 'undefined' && typeof window.scrollTo !== 'function') {
   window.scrollTo = (() => {}) as typeof window.scrollTo;
 }
 
+// jsdom doesn't ship IntersectionObserver. The horizontal-pager uses it to
+// track the active page; in tests we just want it to not throw.
+if (typeof globalThis.IntersectionObserver === 'undefined') {
+  class IntersectionObserverStub {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
+    readonly root: Element | null = null;
+    readonly rootMargin: string = '';
+    readonly thresholds: readonly number[] = [];
+  }
+  (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver =
+    IntersectionObserverStub;
+}
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
