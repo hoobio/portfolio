@@ -79,7 +79,6 @@ async function start() {
     await app.register(fastifyStatic, {
       root: config.webDistDir,
       prefix: '/',
-      decorateReply: false,
       wildcard: false,
     });
     app.setNotFoundHandler(async (request, reply) => {
