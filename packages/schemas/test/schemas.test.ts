@@ -246,12 +246,23 @@ describe('WorkThemes', () => {
 });
 
 describe('SbomSummary', () => {
+  const emptyVulns = {
+    available: false,
+    counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, unassigned: 0 },
+    total: 0,
+  };
   it('parses with components', () => {
     const c = SbomComponent.parse({ name: 'react' });
     expect(c.licenses).toEqual([]);
+    expect(c.vulnerabilities).toEqual([]);
     expect(
-      SbomSummary.parse({ bomFormat: 'CycloneDX', specVersion: '1.5', componentCount: 1, components: [c] })
-        .componentCount,
+      SbomSummary.parse({
+        bomFormat: 'CycloneDX',
+        specVersion: '1.5',
+        componentCount: 1,
+        components: [c],
+        vulnerabilities: emptyVulns,
+      }).componentCount,
     ).toBe(1);
   });
   it('rejects negative component counts', () => {
@@ -261,6 +272,7 @@ describe('SbomSummary', () => {
         specVersion: '1.5',
         componentCount: -1,
         components: [],
+        vulnerabilities: emptyVulns,
       }),
     ).toThrow();
   });

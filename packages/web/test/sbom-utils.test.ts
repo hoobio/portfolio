@@ -28,11 +28,16 @@ describe('bucketByEcosystem', () => {
       specVersion: '1.5',
       componentCount: 4,
       components: [
-        { name: 'a', purl: 'pkg:npm/a', licenses: [] },
-        { name: 'b', purl: 'pkg:npm/b', licenses: [] },
-        { name: 'c', purl: 'pkg:nuget/c', licenses: [] },
-        { name: 'd', licenses: [] },
+        { name: 'a', purl: 'pkg:npm/a', licenses: [], vulnerabilities: [] },
+        { name: 'b', purl: 'pkg:npm/b', licenses: [], vulnerabilities: [] },
+        { name: 'c', purl: 'pkg:nuget/c', licenses: [], vulnerabilities: [] },
+        { name: 'd', licenses: [], vulnerabilities: [] },
       ],
+      vulnerabilities: {
+        available: false,
+        counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, unassigned: 0 },
+        total: 0,
+      },
     };
     const buckets = bucketByEcosystem(sbom);
     expect(buckets[0]?.name).toBe('npm');

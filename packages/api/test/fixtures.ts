@@ -59,7 +59,12 @@ export const sbomSummaryFixture: SbomSummary = {
   generatedAt: '2026-05-22T00:00:00Z',
   componentCount: 2,
   components: [
-    { name: 'react', version: '19.0.0', type: 'library', purl: 'pkg:npm/react@19.0.0', licenses: ['MIT'] },
-    { name: 'zod', version: '4.0.0', type: 'library', purl: 'pkg:npm/zod@4.0.0', licenses: [] },
+    { name: 'react', version: '19.0.0', type: 'library', purl: 'pkg:npm/react@19.0.0', licenses: ['MIT'], vulnerabilities: [] },
+    { name: 'zod', version: '4.0.0', type: 'library', purl: 'pkg:npm/zod@4.0.0', licenses: [], vulnerabilities: [] },
   ],
+  vulnerabilities: {
+    available: false,
+    counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, unassigned: 0 },
+    total: 0,
+  },
 };
