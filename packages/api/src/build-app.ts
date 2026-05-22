@@ -38,10 +38,9 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
         description:
           'Living-resume API. Returns portfolio content sourced from YAML files in the repository, plus a CycloneDX SBOM summary.',
         version: opts.version,
-        contact: {
-          name: opts.portfolio.profile.name,
-          email: opts.portfolio.profile.contact[0]?.value,
-        },
+        contact: opts.portfolio.profile.contact[0]?.value
+          ? { name: opts.portfolio.profile.name, email: opts.portfolio.profile.contact[0].value }
+          : { name: opts.portfolio.profile.name },
         license: { name: 'MIT' },
       },
       servers: [{ url: '/' }],

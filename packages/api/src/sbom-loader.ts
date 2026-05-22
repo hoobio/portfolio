@@ -1,10 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { SbomSummary } from '@hoobi-portfolio/schemas';
-import type {
-  SbomSummary as SbomSummaryType,
-  ComponentVulnerability,
-} from '@hoobi-portfolio/schemas';
+import { z } from 'zod';
+import { ComponentVulnerability, SbomSummary } from '@hoobi-portfolio/schemas';
+import type { SbomSummary as SbomSummaryType } from '@hoobi-portfolio/schemas';
+
+type ComponentVulnerabilityT = z.infer<typeof ComponentVulnerability>;
+type SeverityT = ComponentVulnerabilityT['severity'];
 
 interface CycloneDxLicense {
   license?: { id?: string; name?: string };
@@ -71,7 +72,7 @@ function normaliseLicense(license: CycloneDxLicense): string | undefined {
   return undefined;
 }
 
-function normaliseSeverity(value: string | undefined): ComponentVulnerability['severity'] {
+function normaliseSeverity(value: string | undefined): SeverityT {
   const lower = (value ?? '').toLowerCase();
   switch (lower) {
     case 'critical':
@@ -102,14 +103,14 @@ export async function loadSbom(path: string): Promise<SbomSummaryType | undefine
   const findings = await readJson<Findings>(sidecarPath);
 
   // Index vulnerabilities by component (purl or name@version) for later merge.
-  const vulnsByKey = new Map<string, ComponentVulnerability[]>();
+  const vulnsByKey = new Map<string, ComponentVulnerabilityT[]>();
 
   // 1) From CycloneDX vulnerabilities block (if the SBOM carries them inline).
   for (const v of bom.vulnerabilities ?? []) {
     const id = v.id ?? 'UNKNOWN';
     const severity = normaliseSeverity(v.ratings?.[0]?.severity);
     const url = v.advisories?.[0]?.url ?? v.source?.url;
-    const entry: ComponentVulnerability = {
+    const entry: ComponentVulnerabilityT = {
       id,
       severity,
       title: v.description,
@@ -129,7 +130,7 @@ export async function loadSbom(path: string): Promise<SbomSummaryType | undefine
     const v = f.vulnerability ?? {};
     if (!c.purl && !(c.name && c.version)) continue;
     const key = c.purl ?? `${c.name}@${c.version}`;
-    const entry: ComponentVulnerability = {
+    const entry: ComponentVulnerabilityT = {
       id: v.vulnId ?? 'UNKNOWN',
       severity: normaliseSeverity(v.severity),
       title: v.title,
@@ -157,7 +158,7 @@ export async function loadSbom(path: string): Promise<SbomSummaryType | undefine
     };
   });
 
-  const counts = {
+  const counts: Record<SeverityT, number> = {
     critical: 0,
     high: 0,
     medium: 0,

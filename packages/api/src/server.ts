@@ -18,18 +18,17 @@ import { healthRoutes } from './routes/health.js';
 import { metaRoutes } from './routes/meta.js';
 
 async function start() {
-  const app = Fastify({
-    logger: {
-      level: config.logLevel,
-      transport:
-        process.env['NODE_ENV'] === 'production'
-          ? undefined
-          : {
-              target: 'pino-pretty',
-              options: { colorize: true, translateTime: 'HH:MM:ss.l' },
-            },
-    },
-  }).withTypeProvider<ZodTypeProvider>();
+  const loggerOpts =
+    process.env['NODE_ENV'] === 'production'
+      ? { level: config.logLevel }
+      : {
+          level: config.logLevel,
+          transport: {
+            target: 'pino-pretty',
+            options: { colorize: true, translateTime: 'HH:MM:ss.l' },
+          },
+        };
+  const app = Fastify({ logger: loggerOpts }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
@@ -44,7 +43,9 @@ async function start() {
         description:
           'Living-resume API. Returns portfolio content sourced from YAML files in the repository, plus a CycloneDX SBOM summary.',
         version: config.version,
-        contact: { name: portfolio.profile.name, email: portfolio.profile.contact[0]?.value },
+        contact: portfolio.profile.contact[0]?.value
+          ? { name: portfolio.profile.name, email: portfolio.profile.contact[0].value }
+          : { name: portfolio.profile.name },
         license: { name: 'MIT' },
       },
       servers: [{ url: '/' }],
