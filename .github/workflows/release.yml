@@ -22,6 +22,10 @@ env:
 jobs:
   release-please:
     name: Release Please
+    # Failure here (e.g. unparseable commit messages) should not block a
+    # workflow_dispatch deploy. Downstream jobs gate on this output but
+    # tolerate the job itself failing.
+    continue-on-error: true
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     outputs:
@@ -39,7 +43,10 @@ jobs:
   build-image:
     name: Build + push container
     needs: release-please
-    if: needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
+    if: |
+      always() && (
+        needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
+      )
     runs-on: ubuntu-latest
     outputs:
       image-ref: ${{ steps.meta.outputs.ref }}
