@@ -1,0 +1,77 @@
+name: Deploy Bicep (subscription scope)
+description: Runs `az deployment sub create` against the portfolio Bicep template.
+
+inputs:
+  resource-group:
+    description: Target resource group name
+    required: true
+  location:
+    description: Azure region
+    required: true
+  parameters-file:
+    description: Path to the .bicepparam file
+    required: true
+  template-file:
+    description: Path to main.bicep
+    required: true
+  container-image:
+    description: Image reference (e.g. ghcr.io/hoobio/portfolio:1.2.3)
+    required: true
+  app-version:
+    description: Version string baked into /api/health
+    required: true
+  findings-url:
+    description: Public Azure Blob URL where the SBOM findings.json lives
+    required: false
+    default: ''
+
+outputs:
+  fqdn:
+    description: Container App public FQDN
+    value: ${{ steps.deploy.outputs.fqdn }}
+  storage-account:
+    description: Storage account name (use for subsequent SBOM/findings uploads)
+    value: ${{ steps.deploy.outputs.storage }}
+
+runs:
+  using: composite
+  steps:
+    - id: deploy
+      shell: bash
+      env:
+        RESOURCE_GROUP: ${{ inputs.resource-group }}
+        LOCATION: ${{ inputs.location }}
+        PARAMS_FILE: ${{ inputs.parameters-file }}
+        TEMPLATE_FILE: ${{ inputs.template-file }}
+        CONTAINER_IMAGE: ${{ inputs.container-image }}
+        APP_VERSION: ${{ inputs.app-version }}
+        FINDINGS_URL: ${{ inputs.findings-url }}
+      run: |
+        set -euo pipefail
+
+        az deployment sub create \
+          --name "hoobi-portfolio-$(date +%s)" \
+          --location "$LOCATION" \
+          --template-file "$TEMPLATE_FILE" \
+          --parameters "$PARAMS_FILE" \
+          --parameters "resourceGroupName=$RESOURCE_GROUP" \
+          --parameters "containerImage=$CONTAINER_IMAGE" \
+          --parameters "appVersion=$APP_VERSION" \
+          --parameters "findingsUrl=$FINDINGS_URL" \
+          --query 'properties.outputs' \
+          -o json | tee deployment-outputs.json
+
+        FQDN=$(jq -r '.containerAppFqdn.value' deployment-outputs.json)
+        STORAGE=$(jq -r '.storageAccountName.value' deployment-outputs.json)
+        {
+          echo "fqdn=$FQDN"
+          echo "storage=$STORAGE"
+        } >> "$GITHUB_OUTPUT"
+
+        {
+          echo "## Deployment"
+          echo
+          echo "- Site:    https://$FQDN"
+          echo "- Storage: $STORAGE"
+          [ -n "$FINDINGS_URL" ] && echo "- Findings URL: $FINDINGS_URL"
+        } >> "$GITHUB_STEP_SUMMARY"

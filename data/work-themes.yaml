@@ -1,0 +1,78 @@
+# work-themes.yaml
+# Higher-order themes that recur across the work. Each one has receipts.
+
+themes:
+  - id: identity-modernisation
+    title: Identity modernisation
+    description: >-
+      Replacing static credentials with short-lived, audited, identity-bound
+      alternatives across every system that touches Azure.
+    receipts:
+      - PAT-to-GitHub-App migrations for self-hosted CI agents
+      - OIDC federated credentials for npm package authentication via a reusable composite action
+      - Workload Identity migration for cluster-internal Azure access
+      - Privileged Identity Management programme across multiple product platforms
+      - Subscription-scoped ABAC with User-Assigned Identities for product integration tenants
+
+  - id: supply-chain-security
+    title: Supply-chain security
+    description: >-
+      Every artefact carries an SBOM. Every dependency is tracked. Every
+      pipeline can answer "what's in this build?" without anyone having to ask.
+    receipts:
+      - Reusable CycloneDX SBOM pipeline template rolled out across consumer repos
+      - Self-hosted Dependency-Track instance with an opinionated domain/system/component hierarchy
+      - Upstream contribution to OWASP Dependency-Track (issue #4570)
+      - Trivy scanning embedded in container build pipelines
+      - SBOM and build provenance attestation on every signed installer release
+
+  - id: regulated-resilience
+    title: Regulated-environment resilience
+    description: >-
+      Building secondary-region infrastructure for regulated workloads with
+      the identity, DNS and traffic-management plumbing to fail over cleanly.
+    receipts:
+      - Secondary-region public IPs, federated credentials, VNets, clusters, WAFs, Traffic Manager
+      - Centralised private DNS zones across regulated environments
+      - Service-endpoint to private-endpoint migration
+      - cert-manager federated-credential automation
+      - User-Assigned Identity to VMSS automation
+
+  - id: platform-routing-and-mesh
+    title: Platform routing & service mesh
+    description: >-
+      How services talk to each other, how external traffic reaches them,
+      and how the rules stay consistent across regions and clusters.
+    receipts:
+      - Istio rollout across the platform compute fleet
+      - East-west connectivity between control and shared clusters across multiple regions
+      - APIM regional consolidation removing legacy multi-hop reverse-proxy paths
+      - Hub-and-spoke VNet decoupling with state-migration tooling
+      - Ingress consolidation onto a shared, opinionated helper chart
+
+  - id: gitops-developer-platform
+    title: GitOps developer platform
+    description: >-
+      Self-service deployment paths for product teams, with validation,
+      rollback and observability built into the platform rather than the
+      individual pipelines.
+    receipts:
+      - Node.js GitOps API service exposing self-serve deploys via the shared platform
+      - Helm chart validation at deploy time
+      - Rollback support and per-deployment blob storage
+      - PAT-to-GitHub-App authentication migration for the GitOps API
+      - Rolling region-by-region production deploys gated on readiness and metrics
+
+  - id: ai-native-engineering
+    title: AI-native engineering
+    description: >-
+      Agents as part of the team. Multi-agent orchestration for routine
+      reviews, MCP servers for safe access to organisational systems,
+      and a layered skill harness that captures hard-won standards so they
+      survive across sessions.
+    receipts:
+      - Multi-agent PR review across Azure DevOps and GitHub via MCP
+      - Tenant-partitioned MCP servers for cross-tenant safety
+      - MCP service architecture for the company's Model Context Protocol surface
+      - Skill library encoding code review, security review, change-request drafting, triage, anti-slop prose rules
+      - Project-scoped memory system carrying conventions across sessions

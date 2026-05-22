@@ -1,0 +1,63 @@
+# principles.yaml
+# The engineering principles I work to. These are the load-bearing ideas
+# behind everything else on this site.
+
+principles:
+  - id: secure-by-default
+    title: Secure by default
+    summary: >-
+      Security is a property of the platform, not a checklist applied to it.
+      Reusable templates, identity baked into deploy pipelines, supply-chain
+      controls on by default. The secure path is the path of least resistance.
+    evidence:
+      - SBOM generation and Dependency-Track ingestion embedded in reusable pipeline templates
+      - PAT-to-GitHub-App migrations for self-hosted CI agents
+      - OIDC federated credentials replacing static secrets for package feed auth
+      - Privileged Identity Management rolled out across multiple product platforms
+
+  - id: speed-as-a-property-of-quality
+    title: Speed is a property of quality
+    summary: >-
+      Teams ship faster when the platform removes the steps where decisions
+      used to be made. GitOps, validated templates, opinionated defaults.
+      You earn the speed by making the right thing the easy thing.
+    evidence:
+      - GitOps developer platform for self-service deploys with Helm validation and rollback
+      - Reusable composite actions and pipeline templates rolled out across consumer repos
+      - Region-by-region rolling production deploys gated on readiness and metrics
+
+  - id: identity-first
+    title: Identity-first
+    summary: >-
+      Most platform problems are identity problems wearing other costumes. Get
+      identity right and the blast radius shrinks, the audit trail clarifies,
+      and the engineers downstream stop needing exceptions.
+    evidence:
+      - Replacing static credentials with GitHub Apps, OIDC, managed identity, workload identity
+      - Privileged Identity Management programme with IaC-driven config and drift detection
+      - Centralised TLS estate management and rotation across the company's domain footprint
+
+  - id: regulated-environment-fluency
+    title: Regulated-environment fluency
+    summary: >-
+      Regulated builds are not a tax. They are a discipline that pays off in
+      every environment if you let them. Designing for FedRAMP shapes how
+      you think about commercial too.
+    evidence:
+      - "FedRAMP secondary-region disaster recovery programme: provisioning, traffic management, identity and DNS"
+      - Kernel-feature compatibility work across FIPS and commercial kernel pools
+      - Federated credential, private-endpoint, and private-DNS migrations across regulated environments
+
+  - id: ai-native-engineering
+    title: AI-native engineering
+    subtitle: Agentic workflows I built and tune for my own work, not features turned on from a menu.
+    summary: >-
+      I run multi-agent code review on my own pull requests, drive operational work
+      through tenant-scoped MCP servers, and maintain a layered skill library that
+      captures hard-won conventions across sessions. The agents do the routine work
+      the humans already agreed on so the humans can spend time on the judgement calls.
+    evidence:
+      - Multi-agent PR review harness orchestrating parallel reviews via MCP
+      - Tenant-partitioned MCP servers for safe cross-tenant operations
+      - MCP service architecture for surfacing organisational APIs to agents
+      - Layered skills + project memory system that carries standards across sessions

@@ -1,0 +1,128 @@
+# skills.yaml
+# Capability groups. The order matters: the first three render largest.
+
+groups:
+  - id: platform-engineering
+    title: Platform engineering
+    level: deep
+    skills:
+      - Platform engineering
+      - Kubernetes (AKS)
+      - Service mesh (Istio, ambient mesh)
+      - GitOps (ArgoCD)
+      - Helm
+      - Cert Manager
+      - Secrets Management
+      - Custom Developer Tooling
+
+  - id: cloud-azure
+    title: Cloud (Azure primary)
+    level: deep
+    skills:
+      - Azure (AKS, APIM, Front Door, App Gateway, Entra)
+      - Azure Classic (App Services, Cloud Services, Virtual Machines)
+      - Terraform
+      - Bicep
+      - ARM
+      - AWS
+      - GCP (limited exposure)
+
+  - id: identity-and-auth
+    title: Identity & auth
+    level: deep
+    skills:
+      - OAuth 2.0
+      - OpenID Connect
+      - OIDC Federated Credentials
+      - Managed Identity & Workload Identity
+      - Privileged Identity Management (PIM)
+      - GitHub Apps
+      - Entra ID
+      - Custom RBAC & ABAC
+      - Auth0
+
+  - id: supply-chain-security
+    title: Supply-chain & vulnerability management
+    level: deep
+    skills:
+      - CycloneDX SBOMs
+      - OWASP Dependency-Track (upstream contributor)
+      - Trivy / Snyk
+      - Veracode
+      - Code signing (Authenticode, MSIX)
+      - SBOM attestation & provenance
+
+  - id: networking-and-edge
+    title: Networking & edge
+    level: deep
+    skills:
+      - Hub-and-spoke Networking
+      - Private Networking (Private Endpoints & Private DNS)
+      - Cloudflare WAF and Global Load Balancing
+      - Imperva WAF
+      - Azure Front Door
+      - Application Gateway
+      - APIM
+      - nginx
+      - eBPF awareness for service-mesh work
+
+  - id: cicd
+    title: CI/CD
+    level: deep
+    skills:
+      - Azure DevOps pipelines (YAML and Classic)
+      - GitHub Actions
+      - Reusable composite actions
+      - release-please
+      - SBOM and provenance attestation gates
+
+  - id: languages
+    title: Languages
+    level: working
+    skills:
+      - C# / .NET (incl. .NET 10, WinUI 3)
+      - TypeScript / Node.js
+      - PowerShell
+      - Python
+      - Java
+      - SQL
+
+  - id: frontend
+    title: Frontend / desktop
+    level: working
+    skills:
+      - React
+      - WinUI 3
+      - Fluent UI
+      - HTML / CSS
+      - ASP.NET (backend)
+
+  - id: data-and-platform-services
+    title: Data & platform services
+    level: working
+    skills:
+      - Cosmos DB (multi-region, automatic failover)
+      - Azure Storage
+      - Azure Service Bus
+      - Application Insights / Log Analytics
+      - Datadog
+      - PagerDuty
+
+  - id: compliance
+    title: Compliance
+    level: working
+    skills:
+      - FedRAMP
+      - SOC-2
+      - PCI-aware workload patterns
+
+  - id: ai-native-tooling
+    title: AI-native engineering
+    level: deep
+    skills:
+      - Model Context Protocol (MCP) servers
+      - Multi-agent orchestration
+      - Claude Code & Claude Agent SDK
+      - Agentic PR review
+      - Skill / context engineering
+      - Prompt caching strategies

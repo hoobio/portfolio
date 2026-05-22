@@ -1,0 +1,150 @@
+# azure-resources.yaml
+# Azure services I've worked with, grouped by the principle they serve.
+# A "principle" is the architectural intent the service is being used for,
+# not the Azure product category.
+
+principles:
+  - id: compute-and-orchestration
+    title: Compute & orchestration
+    description: >-
+      Where workloads actually run, and how they get scheduled, scaled,
+      and rolled.
+    services:
+      - name: Azure Kubernetes Service (AKS)
+        usage: Primary compute platform. Multi-region, multi-tenancy, regulated and commercial pools.
+      - name: Virtual Machine Scale Sets
+        usage: Underpin AKS node pools and legacy automation workloads.
+      - name: Azure Container Apps
+        usage: Lightweight container hosting. Used here for this portfolio (free consumption tier).
+      - name: Azure App Service
+        usage: Pre-AKS hosting for cloud services and legacy products.
+      - name: Azure Container Instances
+        usage: Ephemeral self-hosted runners with GitHub App authentication.
+      - name: Azure Functions
+        usage: Event-driven automation.
+
+  - id: identity-and-access
+    title: Identity & access
+    description: >-
+      Who can do what, with what credentials, against which resources.
+    services:
+      - name: Entra ID (Azure AD)
+        usage: Tenant identity. SSO, MFA, conditional access.
+      - name: Privileged Identity Management (PIM)
+        usage: Just-in-time elevation across product platforms, IaC-driven.
+      - name: Managed Identity & Workload Identity
+        usage: Replacing static credentials for workloads and CI agents.
+      - name: Federated Credentials
+        usage: OIDC trust from GitHub Actions and Azure DevOps into Azure RBAC.
+      - name: Azure RBAC + ABAC
+        usage: Custom roles, attribute conditions, subscription-scoped delegations.
+
+  - id: networking-and-edge
+    title: Networking & edge
+    description: >-
+      Where traffic enters, how it's filtered, and how internal services
+      reach each other.
+    services:
+      - name: Azure Front Door
+        usage: Global L7 entry, traffic management, WAF policies.
+      - name: Application Gateway
+        usage: Regional ingress for the legacy and regulated estates.
+      - name: API Management (APIM)
+        usage: Regional consolidation, OAuth gating, internal/external surface separation.
+      - name: Virtual Network (VNet)
+        usage: Hub-and-spoke topology with isolated workload spokes.
+      - name: VNet Peering
+        usage: Hub-to-spoke connectivity, cross-region peering.
+      - name: Private Endpoints
+        usage: Replacing service-endpoint patterns with PE for narrow exposure.
+      - name: Private DNS Zones
+        usage: Centralised zones for the platform, removing per-service DNS sprawl.
+      - name: Traffic Manager
+        usage: Active-passive regional failover in regulated environments.
+      - name: Azure Bastion
+        usage: Operator access without public IPs on management VMs.
+      - name: ExpressRoute / VPN Gateway
+        usage: Hybrid connectivity (legacy on-prem era).
+
+  - id: data
+    title: Data
+    description: >-
+      Stateful workloads, durability, replication, recovery.
+    services:
+      - name: Cosmos DB
+        usage: Multi-region with automatic failover, backup automation, capacity planning.
+      - name: Azure SQL
+        usage: Workload-specific, regulated workloads.
+      - name: Azure Storage (Blob, Table, Queue)
+        usage: Per-deployment artefact and state storage.
+      - name: Service Bus
+        usage: Asynchronous messaging between services.
+      - name: Event Grid
+        usage: Event-driven automation between platform services.
+
+  - id: observability
+    title: Observability
+    description: >-
+      Knowing what the platform is doing, fast enough to act on it.
+    services:
+      - name: Application Insights
+        usage: Workspace-backed (post-migration). Front-of-house APM.
+      - name: Log Analytics
+        usage: Central telemetry sink. KQL across the estate.
+      - name: Azure Monitor
+        usage: Metrics, alerts, autoscale signals.
+      - name: Managed Grafana
+        usage: Operational dashboards.
+
+  - id: governance
+    title: Governance & compliance
+    description: >-
+      Guard rails: what cannot be done, what must be tagged, what gets reviewed.
+    services:
+      - name: Azure Policy
+        usage: Subscription-level guard rails. Tagging, region restrictions, resource-type allow-lists.
+      - name: Management Groups
+        usage: Top-level governance model for autonomous product teams.
+      - name: Resource Tags
+        usage: "Standardised: environment, owner, managed-by. Validated in PR."
+      - name: Microsoft Defender for Cloud
+        usage: Cloud security posture management across subs.
+
+  - id: edge-and-cdn
+    title: External edge (non-Azure)
+    description: >-
+      The bits of the edge that don't live in Azure but are part of the
+      same architecture conversations.
+    services:
+      - name: Imperva WAF
+        usage: Incumbent WAF for the regulated and commercial estates.
+      - name: Cloudflare WAF + Global Load Balancing
+        usage: PoC alternative / supplement evaluated for the edge stack.
+      - name: AWS Route 53
+        usage: Hosted-zone automation for regulated workloads.
+
+  - id: ci-and-supply-chain
+    title: CI & supply-chain
+    description: >-
+      How code becomes a deployable artefact, and what we know about it.
+    services:
+      - name: Azure DevOps Pipelines
+        usage: Primary CI/CD platform. YAML pipelines + reusable templates.
+      - name: GitHub Actions
+        usage: For workflows that need to live with the public repos.
+      - name: Azure Container Registry (ACR)
+        usage: Private container images. Trivy scanning in pipeline.
+      - name: Azure Key Vault
+        usage: Secret storage, certificate management.
+
+  - id: iac
+    title: Infrastructure as code
+    description: >-
+      How the above gets defined, reviewed, and rolled out.
+    services:
+      - name: Terraform
+        usage: Primary IaC tool. Modules, remote state, lifecycle management.
+      - name: Bicep
+        usage: Preferred for new ARM work.
+      - name: ARM Templates
+        usage: Maintained for legacy stacks.

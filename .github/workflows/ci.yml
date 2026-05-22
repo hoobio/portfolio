@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (oxlint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./operations/pipelines/install-deps
+      - run: bun run lint
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./operations/pipelines/install-deps
+      - run: bun run typecheck
+
+  test:
+    name: Test + coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./operations/pipelines/install-deps
+      - run: bun run test:coverage
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-${{ github.run_id }}
+          path: packages/*/coverage/
+          if-no-files-found: warn
+
+  build:
+    name: Build (web + api + SBOM)
+    needs: [lint, typecheck, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./operations/pipelines/install-deps
+      - uses: ./operations/pipelines/build-bundle
+      - uses: actions/upload-artifact@v7
+        with:
+          name: build-${{ github.run_id }}
+          path: |
+            packages/api/dist/
+            packages/web/dist/
+            packages/api/public/sbom.cdx.json
+          if-no-files-found: error

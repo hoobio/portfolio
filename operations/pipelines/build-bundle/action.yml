@@ -1,0 +1,32 @@
+name: Build site bundle + SBOM
+description: Builds the web + api packages, generates the CycloneDX SBOM, exposes a build summary.
+
+outputs:
+  sbom-path:
+    description: Path to the generated CycloneDX SBOM
+    value: packages/api/public/sbom.cdx.json
+
+runs:
+  using: composite
+  steps:
+    - name: bun run build
+      shell: bash
+      run: bun run build
+
+    - name: bun run sbom
+      shell: bash
+      run: bun run sbom
+
+    - name: Build summary
+      shell: bash
+      run: |
+        {
+          echo "## Build artefacts"
+          echo
+          du -sh packages/web/dist 2>/dev/null | awk '{print "- web bundle: " $0}'
+          du -sh packages/api/dist 2>/dev/null | awk '{print "- api bundle: " $0}'
+          if [ -f packages/api/public/sbom.cdx.json ]; then
+            count=$(jq '.components | length' packages/api/public/sbom.cdx.json 2>/dev/null || echo unknown)
+            echo "- SBOM components: $count"
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"

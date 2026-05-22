@@ -1,0 +1,152 @@
+name: Dependency-Track findings -> Azure Blob
+description: |
+  Polls Dependency-Track for the most recent findings on a project version,
+  transforms the response into the site's findings.json shape, and uploads
+  it to public-read Azure Blob storage. Run this AFTER the SBOM has been
+  uploaded to Dependency-Track so the project has time to be analysed.
+
+inputs:
+  dt-host:
+    description: Dependency-Track host (no scheme)
+    required: true
+  dt-api-key:
+    description: DT API key with VULNERABILITY_ANALYSIS permission
+    required: true
+  project-name:
+    description: DT project name (use the same value as the SBOM upload step's component path)
+    required: true
+  project-version:
+    description: DT project version
+    required: true
+  azure-storage-account:
+    description: Azure Storage account name to upload findings to
+    required: true
+  azure-container:
+    description: Blob container name
+    required: false
+    default: sbom
+  poll-timeout-seconds:
+    description: Maximum time to wait for DT analysis to complete
+    required: false
+    default: '180'
+
+outputs:
+  blob-url:
+    description: Public URL of the uploaded findings.json
+    value: ${{ steps.upload.outputs.blob-url }}
+
+runs:
+  using: composite
+  steps:
+    - name: Poll DT for findings + upload to Azure Blob
+      id: upload
+      shell: bash
+      env:
+        DT_HOST: ${{ inputs.dt-host }}
+        DT_API_KEY: ${{ inputs.dt-api-key }}
+        PROJECT_NAME: ${{ inputs.project-name }}
+        PROJECT_VERSION: ${{ inputs.project-version }}
+        STORAGE_ACCOUNT: ${{ inputs.azure-storage-account }}
+        CONTAINER: ${{ inputs.azure-container }}
+        TIMEOUT_S: ${{ inputs.poll-timeout-seconds }}
+      run: |
+        set -euo pipefail
+
+        echo "Looking up project '$PROJECT_NAME' version '$PROJECT_VERSION' in Dependency-Track"
+        deadline=$(( $(date +%s) + TIMEOUT_S ))
+        project_uuid=""
+        while [ "$(date +%s)" -lt "$deadline" ]; do
+          resp=$(curl -fsS \
+            -H "X-Api-Key: $DT_API_KEY" \
+            "https://$DT_HOST/api/v1/project/lookup?name=$PROJECT_NAME&version=$PROJECT_VERSION" || true)
+          if [ -n "$resp" ] && [ "$(echo "$resp" | jq -r '.uuid // empty')" != "" ]; then
+            project_uuid=$(echo "$resp" | jq -r '.uuid')
+            break
+          fi
+          echo "Project not yet visible, retrying..."
+          sleep 5
+        done
+
+        if [ -z "$project_uuid" ]; then
+          echo "::warning::DT project not found within timeout; skipping findings upload"
+          echo "blob-url=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        echo "Project UUID: $project_uuid"
+
+        # Wait for the BOM to be processed (last bomImport metric becomes non-null).
+        while [ "$(date +%s)" -lt "$deadline" ]; do
+          metrics=$(curl -fsS -H "X-Api-Key: $DT_API_KEY" \
+            "https://$DT_HOST/api/v1/metrics/project/$project_uuid/current" || true)
+          if [ -n "$metrics" ] && [ "$(echo "$metrics" | jq -r '.lastOccurrence // empty')" != "" ]; then
+            break
+          fi
+          echo "Awaiting analysis..."
+          sleep 5
+        done
+
+        # Fetch findings.
+        findings_raw=$(curl -fsS -H "X-Api-Key: $DT_API_KEY" \
+          "https://$DT_HOST/api/v1/finding/project/$project_uuid" || echo "[]")
+        echo "$findings_raw" > findings.raw.json
+
+        # Project URL for the UI.
+        project_url="https://$DT_HOST/projects/$project_uuid"
+        now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+        # Transform DT findings into the site's expected shape.
+        jq --arg source "Dependency-Track" \
+           --arg projectUrl "$project_url" \
+           --arg lastScanned "$now" \
+           '{
+              source: $source,
+              projectUrl: $projectUrl,
+              lastScanned: $lastScanned,
+              findings: [.[] | {
+                component: {
+                  name: .component.name,
+                  version: .component.version,
+                  purl: .component.purl
+                },
+                vulnerability: {
+                  vulnId: .vulnerability.vulnId,
+                  source: .vulnerability.source,
+                  severity: (.vulnerability.severity | ascii_downcase),
+                  title: .vulnerability.title,
+                  cweId: (.vulnerability.cwe.cweId // null | tostring),
+                  url: ("https://\($projectUrl|capture("https://(?<h>[^/]+)").h)/vulnerability/?source=\(.vulnerability.source)&vulnId=\(.vulnerability.vulnId)")
+                }
+              }]
+            }' findings.raw.json > findings.json
+
+        finding_count=$(jq '.findings | length' findings.json)
+        echo "Findings: $finding_count"
+
+        # Upload to Azure Blob (using whatever az login session exists in the workflow).
+        az storage blob upload \
+          --account-name "$STORAGE_ACCOUNT" \
+          --container-name "$CONTAINER" \
+          --name "findings/$PROJECT_VERSION/findings.json" \
+          --file findings.json \
+          --content-type application/json \
+          --overwrite --auth-mode login
+
+        az storage blob upload \
+          --account-name "$STORAGE_ACCOUNT" \
+          --container-name "$CONTAINER" \
+          --name "findings/latest/findings.json" \
+          --file findings.json \
+          --content-type application/json \
+          --overwrite --auth-mode login
+
+        blob_url="https://$STORAGE_ACCOUNT.blob.core.windows.net/$CONTAINER/findings/latest/findings.json"
+        echo "blob-url=$blob_url" >> "$GITHUB_OUTPUT"
+
+        {
+          echo "## Dependency-Track findings"
+          echo
+          echo "- Project: [\`$PROJECT_NAME@$PROJECT_VERSION\`]($project_url)"
+          echo "- Findings: **$finding_count**"
+          echo "- Blob: $blob_url"
+        } >> "$GITHUB_STEP_SUMMARY"

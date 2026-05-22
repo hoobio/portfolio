@@ -1,0 +1,110 @@
+# experience.yaml
+# Role history. Most recent first.
+
+experience:
+  - id: senior-platform-engineer-current
+    title: Senior Platform Engineer
+    company: Workflow automation SaaS
+    location: Melbourne, Australia
+    workType: hybrid
+    start: 2024-01
+    end: present
+    current: true
+    summary: >-
+      On the team that owns the shared developer and service platform.
+      Service mesh, regulated-environment DR, hub-and-spoke networking,
+      GitOps developer tooling, identity modernisation, supply-chain security,
+      and the early AI-native platform engineering work.
+    highlights:
+      - Cross-region service mesh rollout and east-west connectivity across the compute fleet.
+      - "Regulated-environment disaster recovery: secondary-region provisioning, traffic management, identity and DNS plumbing."
+      - Network topology refactors separating shared hub resources from product workloads, with the IaC, pipeline and state-migration tooling to make it safe.
+      - GitOps developer platform that lets product teams self-serve deploys, with Helm validation and rollback.
+      - Kernel and runtime upgrades across Kubernetes node pools, including the compatibility work that comes with regulated builds.
+      - "Identity modernisation: replacing PATs with GitHub Apps, OIDC federated credentials and managed identity. PIM across product teams."
+      - "Supply-chain security: SBOMs, vulnerability ingestion, container scanning, reusable pipeline templates that bake the controls in by default."
+      - "AI-native platform engineering: tenant-partitioned MCP servers, multi-agent PR review, MCP service architecture."
+      - Proof-of-concept work on Cloudflare WAF and Global Load Balancing as supplement / alternative to incumbent edge.
+    tech:
+      - Azure (AKS, APIM, Front Door, App Gateway, Entra)
+      - Bicep / ARM
+      - Terraform
+      - Helm
+      - ArgoCD
+      - Istio
+      - GitHub Actions
+      - Azure DevOps pipelines
+      - .NET
+      - TypeScript
+      - PowerShell
+
+  - id: platform-engineer-prior
+    title: Platform Engineer
+    company: Workflow automation SaaS
+    location: Melbourne, Australia
+    workType: hybrid
+    start: 2021-01
+    end: 2024-01
+    summary: >-
+      Cross-cutting platform work: Azure governance, identity programmes,
+      certificate lifecycle, multi-region resilience groundwork, and
+      Reserved-Instance ownership across the Azure footprint.
+    highlights:
+      - "Azure governance for autonomous product teams: management-group model, prod and non-prod isolation, PR-time validation that guard rails stay intact."
+      - Privileged Identity Management programme across multiple product platforms, with IaC-based automation driving it.
+      - Multi-region resilience groundwork that fed the current DR cutover.
+      - "Certificate lifecycle ownership across the company's TLS estate: rotation, automation, expiry detection."
+      - "Cloud cost management: Reserved Instance ownership across the Azure compute and Cosmos footprint."
+    tech:
+      - Azure
+      - Entra ID / PIM
+      - Bicep
+      - Terraform
+      - Azure DevOps
+      - PowerShell
+
+  - id: software-engineer-workflow-cloud
+    title: Software Engineer (Workflow Cloud platform)
+    company: Workflow automation SaaS
+    location: Melbourne, Australia
+    workType: office
+    start: 2018-01
+    end: 2021-01
+    summary: >-
+      Productionising the cloud workflow platform. Foundational Kubernetes
+      migration, regional failover work, backup automation, and pipeline
+      hardening with SAST and end-to-end gating.
+    highlights:
+      - "Kubernetes platform rollout for the company's cloud workflow product: foundational migration from VM-based hosting to AKS."
+      - "Productionisation of cloud services: regional failover, automatic database failover, backup automation."
+      - "Pipeline hardening: SAST integration, end-to-end and API test gating before production."
+    tech:
+      - Azure
+      - AKS
+      - C# / .NET
+      - ASP.NET
+      - Cosmos DB
+      - Azure DevOps
+      - Veracode
+
+  - id: cloud-platform-engineer
+    title: Cloud / Platform Engineer (On-prem + O365)
+    company: Workflow automation SaaS
+    location: Melbourne, Australia
+    workType: office
+    start: 2016-01
+    end: 2018-01
+    summary: >-
+      On-prem and early-cloud era. Datacentre refresh, virtualisation
+      automation, disaster recovery for the on-prem estate, and the early
+      container orchestration evaluation that seeded the later AKS direction.
+    highlights:
+      - Datacentre refresh programme covering hardware, capacity uplift, and the supporting automation.
+      - Virtualisation platform migrations and automated VM delivery.
+      - Disaster recovery for the on-prem estate.
+      - Early evaluation of container orchestration, which seeded the later AKS direction.
+    tech:
+      - System Center VMM
+      - PowerShell
+      - Azure (early adoption)
+      - Service Fabric (POC)

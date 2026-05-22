@@ -1,0 +1,19 @@
+name: Install dependencies (Bun, frozen)
+description: Sets up Bun and runs a frozen-lockfile install. Mirrors local dev exactly.
+
+inputs:
+  bun-version:
+    description: Bun version to install
+    required: false
+    default: 1.3.14
+
+runs:
+  using: composite
+  steps:
+    - uses: oven-sh/setup-bun@v3
+      with:
+        bun-version: ${{ inputs.bun-version }}
+
+    - name: bun install --frozen-lockfile
+      shell: bash
+      run: bun install --frozen-lockfile

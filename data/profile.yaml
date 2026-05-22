@@ -1,0 +1,101 @@
+# profile.yaml
+# The top-of-fold identity. Edit anything here and the site updates.
+
+name: Alex Hill
+preferredName: Alex (Hoobi) Hill
+pronouns: he/him
+role: Senior Platform Engineer
+location: Melbourne, Australia
+timezone: Australia/Melbourne
+
+headline: >-
+  Senior Platform Engineer building secure-by-default platforms at speed.
+  Azure-focused, Kubernetes-deep, identity-obsessed. AI-native in how I work.
+
+tagline: Why do work twice? Do it right and automate it.
+
+summary: |
+  Senior Platform Engineer focused on speedy, secure delivery in an AI-native R&D org.
+
+  Speed and security only conflict when the platform makes them conflict. Most of my work is removing that conflict: making the secure path the path of least resistance for hundreds of engineers, then automating the friction out from underneath them.
+
+  Day job is shared platform engineering: service mesh, identity modernisation, supply-chain security, regulated-environment resilience, and a GitOps developer platform. Outside the day job I maintain open-source Windows tooling, contribute upstream to vulnerability-management projects, and run a home-lab that doubles as a proving ground for patterns I bring back to work.
+
+  Heavy investment in agentic engineering as a force multiplier: multi-agent PR review, MCP servers wired into the dev platform, and a tuned harness of skills that encodes hard-won standards so they survive across sessions.
+
+cloudFocus:
+  primary: Azure
+  primaryDescription: >-
+    Microsoft Azure has been the primary cloud for ~8 years: AKS, APIM, Front Door,
+    App Gateway, Entra, Bicep/ARM and Terraform across commercial and regulated tenancies.
+  secondary:
+    - name: AWS
+      level: working
+      context: Regulated workloads, identity, hosted-zone automation, and customer-segregated tenancies.
+    - name: GCP
+      level: dabble
+      context: Small amount of exposure for specific integration work.
+
+contact:
+  - kind: email
+    value: alex@hoobi.io
+    display: alex@hoobi.io
+    primary: true
+  - kind: github
+    value: https://github.com/hoobio
+    display: github.com/hoobio
+  - kind: linkedin
+    value: https://www.linkedin.com/in/alex-h-905a8990/
+    display: linkedin.com/in/alex-h-905a8990
+  - kind: website
+    value: https://hoobi.io
+    display: hoobi.io
+
+availability:
+  status: open-to-conversations
+  description: >-
+    Open to talking platform engineering, agentic workflows, or secure-by-default systems.
+    Not actively job hunting.
+
+# Used for the JSON-LD Person schema and llms.txt
+seo:
+  description: >-
+    Alex Hill, Senior Platform Engineer based in Melbourne, Australia. Specialises
+    in Azure, Kubernetes, OAuth and identity, supply-chain security, FedRAMP
+    resilience, GitOps, and AI-native engineering workflows. Open-source maintainer.
+  keywords:
+    - Platform Engineering
+    - Senior Platform Engineer
+    - Microsoft Azure
+    - Kubernetes
+    - AKS
+    - Istio
+    - Terraform
+    - Bicep
+    - OAuth
+    - OpenID Connect
+    - OIDC
+    - PIM
+    - Privileged Identity Management
+    - Supply-chain Security
+    - SBOM
+    - CycloneDX
+    - Dependency-Track
+    - FedRAMP
+    - SOC 2
+    - GitOps
+    - ArgoCD
+    - Helm
+    - Service Mesh
+    - APIM
+    - Azure DevOps
+    - GitHub Actions
+    - .NET
+    - WinUI 3
+    - TypeScript
+    - Node.js
+    - PowerShell
+    - Model Context Protocol
+    - MCP
+    - Agentic Engineering
+    - Open Source Maintainer

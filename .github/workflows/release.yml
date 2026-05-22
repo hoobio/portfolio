@@ -1,0 +1,186 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+  pull-requests: write
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
+
+jobs:
+  release-please:
+    name: Release Please
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.rp.outputs.release_created }}
+      tag_name: ${{ steps.rp.outputs.tag_name }}
+      version: ${{ steps.rp.outputs.version }}
+    steps:
+      - id: rp
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  build-image:
+    name: Build + push container
+    needs: release-please
+    if: |
+      always() && (
+        (github.event_name == 'push' && needs.release-please.outputs.release_created == 'true') ||
+        github.event_name == 'release' ||
+        github.event_name == 'workflow_dispatch'
+      )
+    runs-on: ubuntu-latest
+    outputs:
+      image-ref: ${{ steps.meta.outputs.ref }}
+      version: ${{ steps.version.outputs.value }}
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - id: version
+        shell: bash
+        run: |
+          if [[ -n "${{ needs.release-please.outputs.version || '' }}" ]]; then
+            v="${{ needs.release-please.outputs.version }}"
+          elif [[ "${{ github.event_name }}" == "release" ]]; then
+            v="${{ github.event.release.tag_name }}"
+            v="${v#v}"
+          else
+            v="$(cat version.txt | tr -d '[:space:]')-sha.$(echo ${{ github.sha }} | cut -c1-7)"
+          fi
+          echo "value=$v" >> "$GITHUB_OUTPUT"
+
+      - id: meta
+        shell: bash
+        run: |
+          IMG=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          VER="${{ steps.version.outputs.value }}"
+          {
+            echo "image=$IMG"
+            echo "tags=${IMG}:${VER},${IMG}:latest"
+            echo "ref=${IMG}:${VER}"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/api/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          provenance: true
+          sbom: true
+
+      - name: Attest image provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ${{ steps.meta.outputs.image }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  deploy:
+    name: Deploy to Azure Container Apps
+    needs: build-image
+    if: always() && needs.build-image.result == 'success'
+    runs-on: ubuntu-latest
+    environment: azure
+    outputs:
+      fqdn: ${{ steps.deploy.outputs.fqdn }}
+      storage: ${{ steps.deploy.outputs.storage-account }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: azure/login@v2
+        with:
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - id: deploy
+        uses: ./operations/pipelines/deploy-bicep
+        with:
+          resource-group: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-hoobi-portfolio' }}
+          location: ${{ vars.AZURE_LOCATION || 'australiaeast' }}
+          parameters-file: operations/variables/prod.bicepparam
+          template-file: operations/provision/main.bicep
+          container-image: ${{ needs.build-image.outputs.image-ref }}
+          app-version: ${{ needs.build-image.outputs.version }}
+
+  sbom:
+    name: SBOM + Dependency-Track findings
+    needs: [build-image, deploy]
+    if: always() && needs.build-image.result == 'success'
+    runs-on: ubuntu-latest
+    environment: azure
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./operations/pipelines/install-deps
+      - run: bun run sbom
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sbom
+          path: packages/api/public/sbom.cdx.json
+          if-no-files-found: error
+      - uses: actions/attest-sbom@v3
+        with:
+          subject-path: packages/api/public/sbom.cdx.json
+          sbom-path: packages/api/public/sbom.cdx.json
+      - uses: azure/login@v2
+        if: needs.deploy.outputs.storage != ''
+        with:
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Upload SBOM to Azure Blob (public-read)
+        if: needs.deploy.outputs.storage != ''
+        env:
+          VERSION: ${{ needs.build-image.outputs.version }}
+          STORAGE: ${{ needs.deploy.outputs.storage }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          az storage blob upload \
+            --account-name "$STORAGE" --container-name sbom \
+            --name "${VERSION}/sbom.cdx.json" \
+            --file packages/api/public/sbom.cdx.json \
+            --content-type application/vnd.cyclonedx+json \
+            --overwrite --auth-mode login
+          az storage blob upload \
+            --account-name "$STORAGE" --container-name sbom \
+            --name "latest/sbom.cdx.json" \
+            --file packages/api/public/sbom.cdx.json \
+            --content-type application/vnd.cyclonedx+json \
+            --overwrite --auth-mode login
+      - name: Upload SBOM to Dependency-Track + pull findings -> Blob
+        if: needs.deploy.outputs.storage != '' && env.DT_HOST != ''
+        env:
+          DT_HOST: ${{ secrets.DT_HOST }}
+          DT_API_KEY: ${{ secrets.DT_API_KEY }}
+        shell: bash
+        run: |
+          echo "TODO: integrate hoobio/pipeline-tools/job/upload-sbom-to-dependency-track"
+          echo "Then call ./operations/pipelines/dt-findings-to-blob to write findings.json"

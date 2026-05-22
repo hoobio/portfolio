@@ -1,0 +1,148 @@
+# projects.yaml
+# Flagship and open-source projects. Mix of work-adjacent and personal.
+
+projects:
+  - id: command-palette-bitwarden
+    title: Hoobi Bitwarden Command Palette Extension
+    kind: open-source
+    role: Author & maintainer
+    status: active
+    start: 2025-01
+    summary: >-
+      Open-source Bitwarden integration for the Windows Command Palette
+      (the PowerToys-based command surface). Biometric-gated, signed MSI
+      installer, Microsoft Store release, ongoing issue triage.
+    highlights:
+      - .NET 10 / WinUI 3 with WiX 5 MSI installer and Authenticode signing.
+      - Microsoft Store release pipeline with release-please reusable workflows.
+      - Biometric auth flow, vault state machine, TOTP enter-key behaviour.
+      - WACK certification on x64 and ARM64.
+      - CycloneDX SBOM published with every release and ingested into Dependency-Track.
+    tech:
+      - .NET 10
+      - WinUI 3
+      - WiX 5
+      - GitHub Actions
+      - CycloneDX
+      - Microsoft Store
+    links:
+      - kind: repo
+        url: https://github.com/hoobio/command-palette-bitwarden
+      - kind: store
+        url: https://apps.microsoft.com/
+
+  - id: dependency-track-contribution
+    title: OWASP Dependency-Track upstream contribution
+    kind: open-source
+    role: Contributor
+    status: shipped
+    summary: >-
+      Upstream feature work on the OWASP Dependency-Track project (issue
+      #4570). Container-based JDK build so the contribution could be
+      validated end-to-end before the upstream PR.
+    tech:
+      - Java
+      - Docker
+    links:
+      - kind: repo
+        url: https://github.com/DependencyTrack/dependency-track
+      - kind: issue
+        url: https://github.com/DependencyTrack/dependency-track/issues/4570
+
+  - id: earmark
+    title: Earmark
+    kind: personal
+    role: Author
+    status: active
+    summary: >-
+      Per-application audio output routing for Windows. Rules engine with
+      conditions and actions (device-present, application-name regex), event-driven
+      device and application enumeration, Fluent 2 design, signed MSI installer.
+    tech:
+      - .NET 10
+      - WinUI 3
+      - WiX 5
+      - Fluent 2
+      - PowerShell interop
+
+  - id: hoobi-pr-reviewer
+    title: Hoobi PR Reviewer
+    kind: personal
+    role: Author
+    status: active
+    summary: >-
+      Multi-agent system that orchestrates pull-request reviews across
+      Azure DevOps and GitHub in parallel via MCP. Dispatches subagents
+      per repository class (governance, infrastructure, GitOps, APIM) and
+      consolidates feedback inline.
+    tech:
+      - Model Context Protocol
+      - Claude Agent SDK
+      - TypeScript
+      - GitHub MCP
+      - Azure DevOps MCP
+
+  - id: hoobi-automation
+    title: Hoobi Automation
+    kind: personal
+    role: Author
+    status: active
+    summary: >-
+      Home Assistant integration as a Windows service. Publishes
+      last-input idle metrics over MQTT, drives audio-device restart
+      automation, replaced a fragile PowerShell REST API that needed an
+      interactive session to run.
+    tech:
+      - TypeScript
+      - Node.js
+      - MQTT
+      - Home Assistant
+      - Windows Services
+
+  - id: internal-mcp-service
+    title: Internal MCP service (architectural design)
+    kind: work
+    role: Architect
+    status: in-design
+    summary: >-
+      Architectural design for an internal Model Context Protocol service.
+      Regional API routing, OAuth-gated agent access, multi-domain ingress,
+      relationship with the identity provider. Closed-source internal tool.
+    tech:
+      - APIM
+      - MCP
+      - OAuth
+      - OIDC
+      - Helm
+      - Bicep
+
+  - id: pim-automation
+    title: Privileged Identity Management automation (internal tool)
+    kind: work
+    role: Contributor / designer
+    status: shipped
+    summary: >-
+      An open-source-style automation solution inside the platform-governance
+      repository that drives PIM role assignments via IaC. Audited, repeatable,
+      PR-gated. Rolled out across multiple product platforms.
+    tech:
+      - Terraform
+      - Azure RBAC
+      - PIM
+      - Azure DevOps pipelines
+
+  - id: cloudflare-edge-poc
+    title: Cloudflare WAF + Global Load Balancing PoC
+    kind: work
+    role: Author
+    status: shipped
+    summary: >-
+      Proof-of-concept evaluating Cloudflare's WAF and global load balancing
+      as a supplement (and possible alternative) to the incumbent edge stack.
+      IAC for top-level domains, basic configuration, user onboarding with
+      differentiated access levels per domain.
+    tech:
+      - Cloudflare
+      - Terraform
+      - Global Load Balancing
+      - WAF
