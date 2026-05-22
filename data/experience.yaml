@@ -4,7 +4,7 @@
 experience:
   - id: senior-platform-engineer-current
     title: Senior Platform Engineer
-    company: Workflow automation SaaS
+    company: Nintex
     location: Melbourne, Australia
     workType: hybrid
     start: 2024-01
@@ -38,9 +38,9 @@ experience:
       - TypeScript
       - PowerShell
 
-  - id: platform-engineer-prior
-    title: Platform Engineer
-    company: Workflow automation SaaS
+  - id: senior-devops-engineer
+    title: Senior DevOps Engineer
+    company: Nintex
     location: Melbourne, Australia
     workType: hybrid
     start: 2021-01
@@ -63,9 +63,9 @@ experience:
       - Azure DevOps
       - PowerShell
 
-  - id: software-engineer-workflow-cloud
-    title: Software Engineer (Workflow Cloud platform)
-    company: Workflow automation SaaS
+  - id: devops-engineer
+    title: DevOps Engineer
+    company: Nintex
     location: Melbourne, Australia
     workType: office
     start: 2018-01
@@ -87,9 +87,9 @@ experience:
       - Azure DevOps
       - Veracode
 
-  - id: cloud-platform-engineer
-    title: Cloud / Platform Engineer (On-prem + O365)
-    company: Workflow automation SaaS
+  - id: associate-devops-engineer
+    title: Associate DevOps Engineer
+    company: Nintex
     location: Melbourne, Australia
     workType: office
     start: 2016-01
@@ -109,8 +109,8 @@ experience:
       - Azure (early adoption)
       - Service Fabric (POC)
 
-  - id: it-manager-st-philips
-    title: IT Manager
+  - id: systems-administrator-st-philips
+    title: Systems Administrator
     company: St Philips College
     location: Alice Springs, Australia
     workType: office

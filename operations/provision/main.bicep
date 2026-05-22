@@ -1,20 +1,15 @@
-// Subscription-scoped deployment. Creates a resource group, the Container Apps
-// environment, the Container App that serves the site, and a public-read
-// storage account that hosts published SBOMs.
+// Resource-group-scoped deployment. The resource group is pre-created and
+// the deploying identity (the GitHub Actions OIDC app registration) only
+// has Contributor scoped at the group level - we never create or modify the
+// RG from this template.
 //
 // Cost target: less than 50c/month at portfolio traffic.
 // - Container Apps Consumption: 180k vCPU-seconds + 360k GiB-seconds free/month.
 //   Scale-to-zero (minReplicas: 0) keeps it idle when nobody's looking.
-// - Storage Account Standard_LRS Hot: KB of blobs in the SBOM container = ~$0.
+// - Storage Account Standard_LRS Hot: KB of blobs = ~$0.
 // - No Log Analytics workspace, no ACR (image is on GHCR), no Front Door.
 
-targetScope = 'subscription'
-
-@description('Name of the resource group to create or update.')
-param resourceGroupName string = 'rg-hoobi-portfolio'
-
-@description('Azure region for all resources.')
-param location string = 'australiaeast'
+targetScope = 'resourceGroup'
 
 @description('Container image, e.g. ghcr.io/hoobio/portfolio:1.2.3')
 param containerImage string
@@ -28,27 +23,24 @@ param publicBaseUrl string = ''
 @description('App version stamped into /api/health.')
 param appVersion string = 'dev'
 
+@description('Public Blob URL where the latest findings.json lives. Empty means findings UI hidden.')
+param findingsUrl string = ''
+
 @description('Tags applied to all resources.')
 param tags object = {
   managed_by: 'bicep'
   project: 'hoobi-portfolio'
 }
 
-resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
-  name: resourceGroupName
-  location: location
-  tags: tags
-}
-
 module workload 'modules/workload.bicep' = {
-  scope: rg
   name: 'workload'
   params: {
-    location: location
+    location: resourceGroup().location
     shortName: shortName
     containerImage: containerImage
     publicBaseUrl: publicBaseUrl
     appVersion: appVersion
+    findingsUrl: findingsUrl
     tags: tags
   }
 }
