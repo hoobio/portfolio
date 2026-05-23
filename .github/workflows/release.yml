@@ -184,7 +184,7 @@ jobs:
           if-no-files-found: error
 
       - name: Attest SBOM
-        uses: actions/attest-sbom@v3
+        uses: actions/attest-sbom@v4
         with:
           subject-path: packages/api/public/sbom.cdx.json
           sbom-path: packages/api/public/sbom.cdx.json
