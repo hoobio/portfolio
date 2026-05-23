@@ -196,7 +196,7 @@ jobs:
           prune-stale-children: true
           keep: '10'
           ci-keep: '3'
-          poll-on-finish: 'true'
+          wait-for-processing: 'true'
 
       - name: DT findings + PR gate
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
