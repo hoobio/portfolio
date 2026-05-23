@@ -4,6 +4,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: >-
+          Treat this dispatch as if release-please had cut a release. Runs the
+          Publish draft release + Publish release jobs against the existing
+          tag from .release-please-manifest.json. Use for emergency rebuilds
+          of a tag whose initial pipeline run failed.
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -30,9 +39,11 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.rp.outputs.release_created }}
-      tag_name: ${{ steps.rp.outputs.tag_name }}
+      tag_name: ${{ steps.version.outputs.tag }}
       version: ${{ steps.version.outputs.value }}
     steps:
+      - uses: actions/checkout@v6
+
       # Use a GitHub App token so the release PR is authored by the App, not
       # github-actions[bot]. PRs created by the default GITHUB_TOKEN do not
       # trigger downstream workflow runs (anti-recursion safeguard), which
@@ -46,12 +57,24 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # The wrapper step exposes tag_name but not version; strip the leading v.
+      # Resolve tag + version. release-please populates these when it cuts a
+      # release. For workflow_dispatch + publish_release=true (emergency
+      # rebuild of an existing tag), fall back to the manifest value.
       - id: version
         shell: bash
+        env:
+          RP_TAG: ${{ steps.rp.outputs.tag_name }}
+          PUBLISH_RELEASE: ${{ inputs.publish_release }}
         run: |
-          tag="${{ steps.rp.outputs.tag_name }}"
-          echo "value=${tag#v}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          if [ -n "${RP_TAG:-}" ]; then
+            echo "tag=$RP_TAG" >> "$GITHUB_OUTPUT"
+            echo "value=${RP_TAG#v}" >> "$GITHUB_OUTPUT"
+          elif [ "${PUBLISH_RELEASE:-false}" = "true" ]; then
+            v=$(jq -r '."."' .release-please-manifest.json)
+            echo "tag=v$v" >> "$GITHUB_OUTPUT"
+            echo "value=$v" >> "$GITHUB_OUTPUT"
+          fi
 
   build-and-publish:
     name: Build and Publish
@@ -246,7 +269,9 @@ jobs:
   publish-draft-release:
     name: Publish draft release
     needs: [release-please, build-and-publish, generate-sbom]
-    if: needs.release-please.outputs.release_created == 'true'
+    if: |
+      needs.release-please.outputs.release_created == 'true' ||
+      inputs.publish_release == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -368,7 +393,11 @@ jobs:
   publish-release:
     name: Publish release
     needs: [release-please, pdt-prod]
-    if: always() && needs.release-please.outputs.release_created == 'true' && needs.pdt-prod.result == 'success'
+    if: |
+      always() && needs.pdt-prod.result == 'success' && (
+        needs.release-please.outputs.release_created == 'true' ||
+        inputs.publish_release == true
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Mark draft release as live
