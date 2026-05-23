@@ -26,12 +26,11 @@
     "test:e2e:against": "playwright test --project=remote",
     "test:api": "start-server-and-test 'bun run start:api' http-get://localhost:8090/api/health 'cd tests/api && bru run . --env local'",
     "test:api:against": "cd tests/api && bru run . --env remote",
-    "sbom": "cdxgen -o packages/api/public/sbom.cdx.json -t bun --no-recurse --required-only --spec-version 1.6 .",
+    "sbom": "syft scan dir:. -o cyclonedx-json=packages/api/public/sbom.cdx.json",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "@cyclonedx/cdxgen": "12.4.1",
     "@playwright/test": "1.60.0",
     "@usebruno/cli": "3.4.0",
     "oxlint": "1.66.0",

@@ -136,7 +136,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./operations/pipelines/install-deps
-      - run: bun run sbom
+
+      # syft handles bun.lock text-format natively (cdxgen 12.4.x does not).
+      - uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: packages/api/public/sbom.cdx.json
+          upload-artifact: false
 
       - name: Upload SBOM artifact (for release attachment + downstream jobs)
         uses: actions/upload-artifact@v7
