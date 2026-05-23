@@ -50,7 +50,7 @@ jobs:
       # leaves required checks unsatisfied. The App token is unaffected.
       - name: Run release-please with App token
         id: rp
-        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v1.6.0
+        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v2.1.0
         with:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
           app-private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
