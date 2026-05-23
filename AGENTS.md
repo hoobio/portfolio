@@ -38,7 +38,13 @@ Place new pipeline logic in `operations/pipelines/`. `.github/workflows/` should
 - **TypeScript**: 6.x, strict, ESM, `exactOptionalPropertyTypes: true`.
 - **Linter**: `oxlint` (fast Rust linter). `tsc --noEmit` for typecheck.
 - **Tests**: vitest for unit + integration; Playwright for UI; Bruno for API.
-- **Commit messages**: short, one-line, gitmoji at the start (🐛 ✨ 🔧 📝 🎉 etc.).
+- **Commit messages**: Conventional Commits format with a gitmoji glyph after the type prefix. One line, short. Examples:
+  - `fix: 🐛 detect cert via 'env certificate list' (no 'show' subcommand)`
+  - `feat: ✨ server fetches DT findings.json from FINDINGS_URL at startup`
+  - `chore: 🔧 lower coverage thresholds to realistic gate values`
+  - `docs: 📝 link site -> repo and repo -> site (footer + nav + readme)`
+
+  Types follow the [Conventional Commits](https://www.conventionalcommits.org/) spec: `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `revert`. release-please reads these to decide version bumps - lone gitmoji prefixes (e.g. `🐛 fix typo`) don't parse and break the release flow.
 - **Branch protection on `main`**: required checks are Lint, Typecheck, Test + coverage, Build, PDT (local). Do not weaken these without a reason captured in the PR description.
 - **Prose**: no em-dashes anywhere (use space-hyphen-space or restructure). Commonwealth English. No AI slop ("delve", "navigate", binary contrasts, vague declaratives). Same rule applies to commit messages and inline code comments.
 - **Comments in code**: only where the *why* is non-obvious. Don't narrate what the code already says.
