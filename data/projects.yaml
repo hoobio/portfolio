@@ -3,7 +3,7 @@
 
 projects:
   - id: command-palette-bitwarden
-    title: Hoobi Bitwarden Command Palette Extension
+    title: Command Palette Extension for Bitwarden
     kind: open-source
     role: Author & maintainer
     status: active
@@ -66,7 +66,7 @@ projects:
       - PowerShell interop
 
   - id: hoobi-pr-reviewer
-    title: Hoobi PR Reviewer
+    title: PR Reviewer
     kind: personal
     role: Author
     status: active
@@ -90,8 +90,7 @@ projects:
     summary: >-
       Home Assistant integration as a Windows service. Publishes
       last-input idle metrics over MQTT, drives audio-device restart
-      automation, replaced a fragile PowerShell REST API that needed an
-      interactive session to run.
+      automation and motion activated monitors / sleep.
     tech:
       - TypeScript
       - Node.js
@@ -100,7 +99,7 @@ projects:
       - Windows Services
 
   - id: internal-mcp-service
-    title: Internal MCP service (architectural design)
+    title: Internal MCP services (architectural design)
     kind: work
     role: Architect
     status: in-design
@@ -122,8 +121,8 @@ projects:
     role: Contributor / designer
     status: shipped
     summary: >-
-      An open-source-style automation solution inside the platform-governance
-      repository that drives PIM role assignments via IaC. Audited, repeatable,
+      A closed-sourcee automation solution inside the that drives PIM role
+      assignments via IaC. Audited, repeatable,
       PR-gated. Rolled out across multiple product platforms.
     tech:
       - Terraform
@@ -132,15 +131,16 @@ projects:
       - Azure DevOps pipelines
 
   - id: cloudflare-edge-poc
-    title: Cloudflare WAF + Global Load Balancing PoC
+    title: Cloudflare WAF + Global Load Balancing
     kind: work
     role: Author
     status: shipped
     summary: >-
-      Proof-of-concept evaluating Cloudflare's WAF and global load balancing
+      Cloudflare's WAF and global load balancing
       as a supplement (and possible alternative) to the incumbent edge stack.
-      IAC for top-level domains, basic configuration, user onboarding with
-      differentiated access levels per domain.
+      IAC for top-level domains, configuration, user onboarding with
+      differentiated access levels per domain. Global APIs with claim-based
+      regional routing.
     tech:
       - Cloudflare
       - Terraform
