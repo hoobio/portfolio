@@ -8,6 +8,7 @@
   "draft": true,
   "prerelease": false,
   "separate-pull-requests": false,
+  "pull-request-title-pattern": "chore: release v${version}",
   "packages": {
     ".": {
       "release-type": "node",
