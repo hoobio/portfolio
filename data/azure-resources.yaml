@@ -76,7 +76,7 @@ principles:
       - name: Azure SQL
         usage: Workload-specific, regulated workloads.
       - name: Azure Storage (Blob, Table, Queue)
-        usage: Per-deployment artefact and state storage.
+        usage: Per-deployment artifact and state storage.
       - name: Service Bus
         usage: Asynchronous messaging between services.
       - name: Event Grid
@@ -126,7 +126,7 @@ principles:
   - id: ci-and-supply-chain
     title: CI & supply-chain
     description: >-
-      How code becomes a deployable artefact, and what we know about it.
+      How code becomes a deployable artifact, and what we know about it.
     services:
       - name: Azure DevOps Pipelines
         usage: Primary CI/CD platform. YAML pipelines + reusable templates.

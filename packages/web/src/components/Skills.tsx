@@ -13,7 +13,7 @@ export function Skills({ skills }: { skills: Portfolio['skills'] }) {
     <Section
       id="skills"
       title="skills"
-      caption="Capability groups, by depth. Deep is years-in-anger; working is shipped with; familiar is enough to be useful."
+      caption="Capability groups, by depth of knowledge."
     >
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {skills.map((g) => (

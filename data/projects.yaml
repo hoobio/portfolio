@@ -37,9 +37,7 @@ projects:
     role: Contributor
     status: shipped
     summary: >-
-      Upstream feature work on the OWASP Dependency-Track project (issue
-      #4570). Container-based JDK build so the contribution could be
-      validated end-to-end before the upstream PR.
+      Upstream feature work on the OWASP Dependency-Track project.
     tech:
       - Java
       - Docker
@@ -51,8 +49,8 @@ projects:
 
   - id: earmark
     title: Earmark
-    kind: personal
-    role: Author
+    kind: open-source
+    role: Author & maintainer
     status: active
     summary: >-
       Per-application audio output routing for Windows. Rules engine with

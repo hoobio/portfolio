@@ -17,7 +17,7 @@ themes:
   - id: supply-chain-security
     title: Supply-chain security
     description: >-
-      Every artefact carries an SBOM. Every dependency is tracked. Every
+      Every artifact carries an SBOM. Every dependency is tracked. Every
       pipeline can answer "what's in this build?" without anyone having to ask.
     receipts:
       - Reusable CycloneDX SBOM pipeline template rolled out across consumer repos
