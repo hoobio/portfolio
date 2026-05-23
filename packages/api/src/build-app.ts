@@ -5,6 +5,7 @@ import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import {
   jsonSchemaTransform,
+  jsonSchemaTransformObject,
   serializerCompiler,
   validatorCompiler,
   type ZodTypeProvider,
@@ -70,6 +71,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
       ],
     },
     transform: jsonSchemaTransform,
+    transformObject: jsonSchemaTransformObject,
   });
 
   await app.register(fastifySwaggerUi, {

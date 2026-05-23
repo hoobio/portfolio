@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import {
   jsonSchemaTransform,
+  jsonSchemaTransformObject,
   serializerCompiler,
   validatorCompiler,
   type ZodTypeProvider,
@@ -71,6 +72,7 @@ async function start() {
       ],
     },
     transform: jsonSchemaTransform,
+    transformObject: jsonSchemaTransformObject,
   });
 
   await app.register(fastifySwaggerUi, {
