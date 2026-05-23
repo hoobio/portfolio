@@ -26,6 +26,12 @@ param appVersion string = 'dev'
 @description('Public Blob URL where the latest findings.json lives. Empty means findings UI hidden.')
 param findingsUrl string = ''
 
+@description('Custom hostname to bind to the Container App ingress, e.g. hoobi.io. Empty disables.')
+param customHostname string = ''
+
+@description('Name of the pre-uploaded managed-environment certificate to bind to customHostname.')
+param certificateName string = ''
+
 @description('Tags applied to all resources.')
 param tags object = {
   managed_by: 'bicep'
@@ -41,6 +47,8 @@ module workload 'modules/workload.bicep' = {
     publicBaseUrl: publicBaseUrl
     appVersion: appVersion
     findingsUrl: findingsUrl
+    customHostname: customHostname
+    certificateName: certificateName
     tags: tags
   }
 }

@@ -9,6 +9,12 @@ param appVersion string
 param findingsUrl string = ''
 param tags object
 
+@description('Custom hostname to bind to the Container App ingress, e.g. hoobi.io. Empty disables.')
+param customHostname string = ''
+
+@description('Name of the pre-uploaded managed-environment certificate to bind to customHostname. Required when customHostname is set.')
+param certificateName string = ''
+
 // --- Storage account for public-read SBOMs ---
 
 resource storage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
@@ -86,6 +92,13 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
         targetPort: 8090
         transport: 'auto'
         allowInsecure: false
+        customDomains: empty(customHostname) ? [] : [
+          {
+            name: customHostname
+            bindingType: 'SniEnabled'
+            certificateId: '${appEnv.id}/certificates/${certificateName}'
+          }
+        ]
         traffic: [
           {
             latestRevision: true

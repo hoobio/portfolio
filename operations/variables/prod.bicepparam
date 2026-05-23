@@ -3,6 +3,8 @@ using '../provision/main.bicep'
 param shortName = 'hoobiportfolio'
 param publicBaseUrl = 'https://hoobi.io'
 param findingsUrl = ''
+param customHostname = 'hoobi.io'
+param certificateName = 'cloudflare-origin'
 
 // containerImage and appVersion are injected by the GitHub Actions workflow:
 //   az deployment group create ... \
