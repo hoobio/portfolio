@@ -167,14 +167,14 @@ jobs:
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
 
-      # syft handles bun.lock text-format natively (cdxgen 12.4.x does not).
-      - name: Scan with syft (CycloneDX JSON)
-        uses: anchore/sbom-action@v0
+      # build-cyclonedx-sbom auto-detects bun.lock and routes to syft when
+      # found (cyclonedx-npm doesn't read bun lockfiles).
+      - name: Build CycloneDX SBOM via pipeline-tools
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@feat/bun-node-scan-and-pr-gate
         with:
-          path: .
-          format: cyclonedx-json
-          output-file: packages/api/public/sbom.cdx.json
-          upload-artifact: false
+          app-language: node
+          app-manifest-path: .
+          output-path: packages/api/public/sbom.cdx.json
 
       - name: Upload SBOM artifact (for release attachment + downstream jobs)
         uses: actions/upload-artifact@v7
