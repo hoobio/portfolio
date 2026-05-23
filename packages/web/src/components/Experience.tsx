@@ -5,6 +5,32 @@ function formatRange(start: string, end: string): string {
   return end === 'present' ? `${start} -> present` : `${start} -> ${end}`;
 }
 
+function parseYearMonth(value: string): [number, number] {
+  const [y, m] = value.split('-');
+  return [Number(y), Number(m)];
+}
+
+function formatDuration(start: string, end: string): string {
+  const [sy, sm] = parseYearMonth(start);
+  let ey: number;
+  let em: number;
+  if (end === 'present') {
+    const now = new Date();
+    ey = now.getFullYear();
+    em = now.getMonth() + 1;
+  } else {
+    [ey, em] = parseYearMonth(end);
+  }
+  const totalMonths = Math.max(0, (ey - sy) * 12 + (em - sm));
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years} year${years === 1 ? '' : 's'}`);
+  if (months > 0) parts.push(`${months} month${months === 1 ? '' : 's'}`);
+  if (parts.length === 0) return 'less than a month';
+  return parts.join(', ');
+}
+
 export function Experience({ experience }: { experience: Portfolio['experience'] }) {
   return (
     <Section id="experience" title="experience" caption="Timeline, most recent first.">
@@ -18,8 +44,9 @@ export function Experience({ experience }: { experience: Portfolio['experience']
             <div className="rounded-lg border border-bg-elev-2 bg-bg-elev p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h3 className="text-lg text-accent-blue">{role.title}</h3>
-                <span className="font-mono text-xs text-text-mute">
-                  {formatRange(role.start, role.end)}
+                <span className="flex flex-col items-end font-mono text-xs text-text-mute">
+                  <span>{formatRange(role.start, role.end)}</span>
+                  <span className="text-text-dim">{formatDuration(role.start, role.end)}</span>
                 </span>
               </div>
               <div className="font-mono text-sm text-accent-cyan">
