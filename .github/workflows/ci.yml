@@ -171,7 +171,7 @@ jobs:
       # build-cyclonedx-sbom auto-detects bun.lock and routes to syft.
       - name: Build CycloneDX SBOM
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@feat/bun-node-scan-and-pr-gate
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.2.0
         with:
           app-language: node
           app-manifest-path: .
@@ -179,7 +179,7 @@ jobs:
 
       - name: Upload SBOM to Dependency-Track (channel=pr)
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@feat/bun-node-scan-and-pr-gate
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.2.0
         with:
           bom-path: packages/api/public/sbom.cdx.json
           upload-artifact: 'false'
@@ -200,7 +200,7 @@ jobs:
 
       - name: DT findings + PR gate
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/step/dt-findings-pr-gate@feat/bun-node-scan-and-pr-gate
+        uses: hoobio/pipeline-tools/pipeline/github/step/dt-findings-pr-gate@v2.2.0
         with:
           server-url: https://${{ env.DT_HOST }}
           api-key: ${{ env.DT_API_KEY }}

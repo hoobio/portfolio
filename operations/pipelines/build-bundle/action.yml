@@ -23,7 +23,7 @@ runs:
 
     # build-cyclonedx-sbom auto-detects bun.lock and routes to syft when
     # found (cyclonedx-npm doesn't read bun lockfiles).
-    - uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@feat/bun-node-scan-and-pr-gate
+    - uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.2.0
       with:
         app-language: node
         app-manifest-path: .
