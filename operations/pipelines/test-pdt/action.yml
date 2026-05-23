@@ -27,7 +27,7 @@ runs:
     - name: Install Playwright browsers
       if: ${{ (inputs.mode == 'ui' || inputs.mode == 'all') && inputs.install-playwright-browsers == 'true' }}
       shell: bash
-      run: bunx playwright install --with-deps chromium
+      run: pnpm exec playwright install --with-deps chromium
 
     - name: Playwright UI tests
       if: ${{ inputs.mode == 'ui' || inputs.mode == 'all' }}
@@ -36,9 +36,9 @@ runs:
         PLAYWRIGHT_BASE_URL: ${{ inputs.base-url }}
       run: |
         if [ -n "${{ inputs.base-url }}" ]; then
-          bunx playwright test --project=remote
+          pnpm exec playwright test --project=remote
         else
-          bun run test:e2e
+          pnpm run test:e2e
         fi
 
     - name: Bruno API tests
@@ -49,11 +49,12 @@ runs:
       run: |
         set -euo pipefail
         if [ -n "${{ inputs.base-url }}" ]; then
-          (cd tests/api && bunx bru run . --env remote) 2>&1 | tee bruno-output.txt
+          (cd tests/api && pnpm exec bru run . --env remote) 2>&1 | tee bruno-output.txt
         else
-          # Start the API ourselves so we see Bruno's stdout directly (start-server-and-test
-          # buffers the inner command). Kill the server on exit.
-          bun packages/api/src/server.ts > /tmp/api.log 2>&1 &
+          # Start the API ourselves so we see Bruno's stdout directly
+          # (start-server-and-test buffers the inner command). Kill the
+          # server on exit.
+          node packages/api/dist/server.js > /tmp/api.log 2>&1 &
           API_PID=$!
           trap "kill $API_PID || true" EXIT
           # Wait up to 30s for /api/health to respond.
@@ -63,7 +64,7 @@ runs:
             fi
             sleep 0.5
           done
-          (cd tests/api && bunx bru run . --env local) 2>&1 | tee bruno-output.txt
+          (cd tests/api && pnpm exec bru run . --env local) 2>&1 | tee bruno-output.txt
         fi
 
     - name: Upload Playwright report

@@ -9,9 +9,9 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: bun run build
+    - name: pnpm run build
       shell: bash
-      run: bun run build
+      run: pnpm run build
 
     - name: Stage SPA into api/public/web (for start:api to serve)
       shell: bash
@@ -21,12 +21,15 @@ runs:
         mkdir -p packages/api/public/web
         cp -R packages/web/dist/. packages/api/public/web/
 
-    # build-cyclonedx-sbom auto-detects bun.lock and routes to syft when
-    # found (cyclonedx-npm doesn't read bun lockfiles).
-    - uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.2.1
+    # pnpm-lock.yaml drives the npm component list (via syft's
+    # javascript-lock-cataloger); scan-github-actions-path adds the actions
+    # this repo's workflows reference. No image scan here - that happens
+    # post-publish in the generate-sbom job and adds the OS layer for DT.
+    - uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@feat/sbom-clean-scoping
       with:
         app-language: node
         app-manifest-path: .
+        scan-github-actions-path: .github/workflows
         output-path: packages/api/public/sbom.cdx.json
 
     - name: Build summary

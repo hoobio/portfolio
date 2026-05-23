@@ -162,7 +162,7 @@ export async function loadSbom(
     vulnsByKey.set(key, list);
   }
 
-  const components = (bom.components ?? []).map((component) => {
+  const rawComponents = (bom.components ?? []).map((component) => {
     const purl = component.purl;
     const fallback = `${component.name ?? 'unknown'}@${component.version ?? '0'}`;
     const vulns = vulnsByKey.get(purl ?? '') ?? vulnsByKey.get(fallback) ?? [];
@@ -177,6 +177,43 @@ export async function loadSbom(
       vulnerabilities: vulns,
     };
   });
+
+  // Drop noise that syft's scan pulls in even with focused catalogers:
+  //  - Local composite actions referenced as `uses: ./path/to/action` (these
+  //    are our own source, not third-party deps).
+  //  - File-type entries from a directory-walk fallback (path-shaped names).
+  //  - Anything whose name is just a relative path - they're not packages.
+  const filtered = rawComponents.filter((c) => {
+    if (c.type === 'file') return false;
+    if (c.name.startsWith('./') || c.name.startsWith('/')) return false;
+    return true;
+  });
+
+  // Dedupe by purl when present, otherwise by name@version. Merge license
+  // lists and vulnerability lists across duplicate hits so the surviving
+  // entry carries the union of metadata.
+  const dedupMap = new Map<string, (typeof filtered)[number]>();
+  for (const c of filtered) {
+    const key = c.purl ?? `${c.name}@${c.version ?? 'unknown'}`;
+    const existing = dedupMap.get(key);
+    if (!existing) {
+      dedupMap.set(key, c);
+      continue;
+    }
+    const seenLicences = new Set(existing.licenses);
+    for (const l of c.licenses) seenLicences.add(l);
+    const seenVulnIds = new Set(existing.vulnerabilities.map((v) => v.id));
+    const mergedVulns = [...existing.vulnerabilities];
+    for (const v of c.vulnerabilities) {
+      if (!seenVulnIds.has(v.id)) {
+        mergedVulns.push(v);
+        seenVulnIds.add(v.id);
+      }
+    }
+    existing.licenses = [...seenLicences];
+    existing.vulnerabilities = mergedVulns;
+  }
+  const components = [...dedupMap.values()].sort((a, b) => a.name.localeCompare(b.name));
 
   const counts: Record<SeverityT, number> = {
     critical: 0,

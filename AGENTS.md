@@ -8,7 +8,7 @@ A data-driven personal portfolio site (a "living resume") hosted on Azure Contai
 
 ## Architecture in one paragraph
 
-YAML in `data/` → validated by zod schemas in `packages/schemas/` on server start → served as JSON by Fastify in `packages/api/` (which also auto-generates an OpenAPI spec + Swagger UI) → rendered by a React + Vite SPA in `packages/web/` that the same API hosts on `/`. CycloneDX SBOM is generated at build time by `bun run sbom`. CI/CD lives in `.github/workflows/` orchestrating composite actions in `operations/pipelines/`. Bicep in `operations/provision/` deploys a Container App + Storage Account at resource-group scope.
+YAML in `data/` → validated by zod schemas in `packages/schemas/` on server start → served as JSON by Fastify in `packages/api/` (which also auto-generates an OpenAPI spec + Swagger UI) → rendered by a React + Vite SPA in `packages/web/` that the same API hosts on `/`. CycloneDX SBOM is generated in CI by the pipeline-tools `build-cyclonedx-sbom` step (syft over `pnpm-lock.yaml` and `.github/workflows/`) and baked into the runtime image. CI/CD lives in `.github/workflows/` orchestrating composite actions in `operations/pipelines/`. Bicep in `operations/provision/` deploys a Container App + Storage Account at resource-group scope.
 
 ## Folder layout to mirror
 
@@ -33,8 +33,8 @@ Place new pipeline logic in `operations/pipelines/`. `.github/workflows/` should
 
 ## Conventions
 
-- **Package manager**: `bun` (1.3.x). Lockfile is `bun.lock`. Use `bun install --frozen-lockfile` in CI.
-- **Runtime**: Bun for dev + production container (`oven/bun:1.3.14-alpine`).
+- **Package manager**: `pnpm` (11.x). Lockfile is `pnpm-lock.yaml`. Use `pnpm install --frozen-lockfile` in CI.
+- **Runtime**: Node 22 LTS for dev + production container (`node:22-alpine`). `tsx` for running TS in dev; `esbuild` bundles the API to JS for the runtime image.
 - **TypeScript**: 6.x, strict, ESM, `exactOptionalPropertyTypes: true`.
 - **Linter**: `oxlint` (fast Rust linter). `tsc --noEmit` for typecheck.
 - **Tests**: vitest for unit + integration; Playwright for UI; Bruno for API.
@@ -68,7 +68,7 @@ Place new pipeline logic in `operations/pipelines/`. `.github/workflows/` should
 4. Add a route in `packages/api/src/routes/portfolio.ts` if you want a dedicated endpoint.
 5. Add a section component in `packages/web/src/components/` and include it in `pages/Home.tsx`.
 6. Add a fixture entry to both fixtures files for tests.
-7. Run `bun run typecheck` then `bun run test`.
+7. Run `pnpm run typecheck` then `pnpm run test`.
 
 ### Adding an Azure resource to the Bicep
 
@@ -84,11 +84,11 @@ Drop a new composite action in `operations/pipelines/<step-name>/action.yml`. Re
 ## Local dev
 
 ```pwsh
-bun install --frozen-lockfile
-bun run dev               # API + Vite together
+pnpm install --frozen-lockfile
+pnpm run dev               # API + Vite together
 # or
-bun run dev:api           # API only
-bun run dev:web           # Vite only
+pnpm run dev:api           # API only
+pnpm run dev:web           # Vite only
 ```
 
 - API: `http://localhost:8090`

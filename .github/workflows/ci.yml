@@ -49,7 +49,7 @@ jobs:
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Run oxlint
-        run: bun run lint
+        run: pnpm run lint
 
   typecheck:
     name: Typecheck
@@ -60,7 +60,7 @@ jobs:
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Run tsc --noEmit
-        run: bun run typecheck
+        run: pnpm run typecheck
 
   test:
     name: Unit Tests and Coverage
@@ -74,7 +74,7 @@ jobs:
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Run vitest with coverage
-        run: bun run test:coverage
+        run: pnpm run test:coverage
 
       - name: Coverage summary
         if: always()
@@ -279,15 +279,16 @@ jobs:
 
       - name: Build CycloneDX SBOM
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.2.1
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@feat/sbom-clean-scoping
         with:
           app-language: node
           app-manifest-path: .
+          scan-github-actions-path: .github/workflows
           output-path: packages/api/public/sbom.cdx.json
 
       - name: Upload SBOM to Dependency-Track (channel=pr)
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.2.1
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@feat/sbom-clean-scoping
         with:
           bom-path: packages/api/public/sbom.cdx.json
           upload-artifact: 'false'
@@ -308,7 +309,7 @@ jobs:
 
       - name: DT findings + PR gate
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/step/dt-findings-pr-gate@v2.2.1
+        uses: hoobio/pipeline-tools/pipeline/github/step/dt-findings-pr-gate@feat/sbom-clean-scoping
         with:
           server-url: https://${{ env.DT_HOST }}
           api-key: ${{ env.DT_API_KEY }}
@@ -355,7 +356,7 @@ jobs:
       # fire. The App token is unaffected.
       - name: Run release-please with App token
         id: rp
-        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v2.2.1
+        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@feat/sbom-clean-scoping
         with:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
           app-private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
@@ -438,6 +439,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # The Dockerfile no longer generates the in-image SBOM itself - we
+      # generate it here so `docker build`'s context already contains
+      # packages/api/public/sbom.cdx.json. The runtime image then ships an
+      # SBOM that lists just our pnpm runtime deps + our own GH Actions, with
+      # no syft tooling baked in. The post-publish generate-sbom job builds
+      # a richer SBOM (image OS + app + actions) for DT.
+      - name: Pre-generate in-image SBOM (app + workflows)
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@feat/sbom-clean-scoping
+        with:
+          app-language: node
+          app-manifest-path: .
+          scan-github-actions-path: .github/workflows
+          output-path: packages/api/public/sbom.cdx.json
+
       - name: Build and push container image
         id: push
         uses: docker/build-push-action@v6
@@ -480,12 +495,13 @@ jobs:
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
 
-      - name: Build CycloneDX SBOM via pipeline-tools (image + app)
-        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.2.1
+      - name: Build CycloneDX SBOM via pipeline-tools (image + app + workflows)
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@feat/sbom-clean-scoping
         with:
           image: ${{ needs.build-and-publish.outputs.image-ref }}
           app-language: node
           app-manifest-path: .
+          scan-github-actions-path: .github/workflows
           output-path: packages/api/public/sbom.cdx.json
 
       - name: Upload SBOM artifact (for release attachment + downstream jobs)
@@ -547,7 +563,7 @@ jobs:
 
       - name: Upload SBOM to Dependency-Track
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.2.1
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@feat/sbom-clean-scoping
         with:
           bom-path: packages/api/public/sbom.cdx.json
           upload-artifact: 'false'

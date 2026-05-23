@@ -61,8 +61,8 @@ Group-scoped Contributor is enough: the Bicep template is `targetScope = 'resour
 ## 5. Local development
 
 ```pwsh
-bun install --frozen-lockfile
-bun run dev
+pnpm install --frozen-lockfile
+pnpm run dev
 ```
 
 - API on `http://localhost:8090`
@@ -70,10 +70,10 @@ bun run dev
 
 Vite proxies `/api/*`, `/docs`, `/llms.txt`, `/robots.txt`, `/sitemap.xml` to the API.
 
-To render the SBOM panel locally:
+The SBOM panel reads `packages/api/public/sbom.cdx.json`. Generate it locally with [syft](https://github.com/anchore/syft) and the two scoped catalogger sets the CI uses:
 
 ```pwsh
-bun run sbom
+syft scan dir:. --override-default-catalogers javascript-lock-cataloger -o cyclonedx-json=packages/api/public/sbom.cdx.json
 # Restart the API (it loads the SBOM at boot)
 ```
 

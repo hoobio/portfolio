@@ -5,9 +5,9 @@
   "type": "module",
   "main": "./dist/server.js",
   "scripts": {
-    "dev": "bun --watch src/server.ts",
-    "build": "bun build src/server.ts --outdir dist --target node --format esm --sourcemap",
-    "start": "bun dist/server.js",
+    "dev": "tsx --watch src/server.ts",
+    "build": "esbuild src/server.ts --bundle --platform=node --target=node22 --format=esm --external:fastify --external:@fastify/* --external:fastify-type-provider-zod --external:yaml --external:zod --external:pino-pretty --outfile=dist/server.js --sourcemap",
+    "start": "node dist/server.js",
     "lint": "oxlint src",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -27,8 +27,10 @@
   "devDependencies": {
     "@types/node": "25.9.1",
     "@vitest/coverage-v8": "4.1.7",
+    "esbuild": "0.28.0",
     "oxlint": "1.66.0",
     "pino-pretty": "13.1.3",
+    "tsx": "4.22.3",
     "typescript": "6.0.3",
     "vitest": "4.1.7"
   }

@@ -1,37 +1,36 @@
 # syntax=docker/dockerfile:1.7-labs
-FROM oven/bun:1.3.14-alpine AS deps
+FROM node:22-alpine AS deps
+RUN corepack enable && corepack prepare pnpm@11.2.2 --activate
 WORKDIR /app
-COPY package.json bun.lock bunfig.toml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY packages/schemas/package.json packages/schemas/
 COPY packages/api/package.json packages/api/
 COPY packages/web/package.json packages/web/
-RUN bun install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
-# syft generates the in-image SBOM (the runtime endpoint /api/sbom serves it).
-# Pinned to the latest stable at the time of writing.
-RUN apk add --no-cache curl bash \
- && curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
-    | sh -s -- -b /usr/local/bin v1.40.1 \
- && apk del curl
 COPY . .
-RUN bun run --filter @hoobi-portfolio/web build \
- && bun run --filter @hoobi-portfolio/api build \
- && bun run sbom
+RUN pnpm --filter @hoobi-portfolio/web run build \
+ && pnpm --filter @hoobi-portfolio/api run build
 
-FROM oven/bun:1.3.14-alpine AS runtime
+# Assemble a self-contained runtime tree: only api's prod deps, workspace
+# refs inlined (`pnpm deploy`). This is what the runtime image ships, and
+# it's also what the CI SBOM step scans against the resulting image.
+FROM build AS deploy
+RUN pnpm --filter @hoobi-portfolio/api deploy --prod /tmp/api-deploy
+
+FROM node:22-alpine AS runtime
 ENV NODE_ENV=production
 ENV PORT=8090
 ENV HOST=0.0.0.0
 WORKDIR /app
 
-COPY --from=build /app/packages/api/dist ./dist
-COPY --from=build /app/packages/api/public ./public
-COPY --from=build /app/packages/web/dist ./public/web
-COPY --from=build /app/data ./data
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/packages/api/node_modules ./packages/api/node_modules
-COPY --from=build /app/packages/schemas ./packages/schemas
+COPY --from=deploy /tmp/api-deploy/package.json ./package.json
+COPY --from=deploy /tmp/api-deploy/node_modules ./node_modules
+COPY --from=build  /app/packages/api/dist ./dist
+COPY --from=build  /app/packages/api/public ./public
+COPY --from=build  /app/packages/web/dist ./public/web
+COPY --from=build  /app/data ./data
 
 ENV DATA_DIR=/app/data
 ENV PUBLIC_DIR=/app/public
@@ -39,5 +38,5 @@ ENV WEB_DIST_DIR=/app/public/web
 ENV SBOM_PATH=/app/public/sbom.cdx.json
 
 EXPOSE 8090
-USER bun
-CMD ["bun", "dist/server.js"]
+USER node
+CMD ["node", "dist/server.js"]
