@@ -1,10 +1,11 @@
 # syntax=docker/dockerfile:1.7-labs
 
-# Runtime base. CI passes `--build-arg RUNTIME_IMAGE=...` to flip this
-# to a Docker Hardened Image when the repo's RUNTIME_IMAGE variable is
-# set; otherwise we fall back to plain node:24-alpine (which ships an
-# npm bundle whose vendored deps will pollute the SBOM scan).
-ARG RUNTIME_IMAGE=node:24-alpine
+# Runtime base. Docker Hardened Image (dhi.io/node:24) by default;
+# overridable via `--build-arg RUNTIME_IMAGE=...` from CI. DHI ships
+# without the npm bundle and tracks alpine security releases on a
+# daily rebuild cadence so musl / busybox / openssl patches land
+# without us baking apk upgrades.
+ARG RUNTIME_IMAGE=dhi.io/node:24
 
 # ----- build stages on plain node:24-alpine (need apk + corepack) -----
 FROM node:24-alpine AS deps
