@@ -5,19 +5,44 @@ on:
     branches: [main]
   push:
     branches: [main]
+  schedule:
+    - cron: "22 1 * * 5"
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: >-
+          Treat this dispatch as if release-please had cut a release. Runs the
+          Publish draft release + Publish release jobs against the existing
+          tag from .release-please-manifest.json. Use for emergency rebuilds
+          of a tag whose initial pipeline run failed.
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
   pull-requests: write
+  security-events: write
+  actions: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # PRs cancel in-progress to save runner time; pushes to main (release flow)
+  # are not cancelled so a fast follow-up push doesn't abort a deploy.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
 
 jobs:
+  # ============================================================
+  # Fast checks (PR + push + dispatch; skipped on schedule)
+  # ============================================================
   lint:
     name: Lint
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -28,6 +53,7 @@ jobs:
 
   typecheck:
     name: Typecheck
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -38,6 +64,7 @@ jobs:
 
   test:
     name: Unit Tests and Coverage
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -82,10 +109,8 @@ jobs:
           existing=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate --jq '.[] | select(.body | contains("<!-- coverage-bot -->")) | .id' 2>/dev/null | head -1 || true)
           if [ -n "$existing" ]; then
             gh api --method PATCH "repos/${{ github.repository }}/issues/comments/$existing" -f body="$BODY" > /dev/null
-            echo "Updated coverage comment $existing"
           else
             gh pr comment "$PR" --body "$BODY"
-            echo "Created coverage comment"
           fi
 
       - if: always()
@@ -98,6 +123,7 @@ jobs:
 
   build:
     name: Build
+    if: github.event_name != 'schedule'
     needs: [lint, typecheck, test]
     runs-on: ubuntu-latest
     steps:
@@ -118,6 +144,7 @@ jobs:
 
   ui-tests:
     name: UI Tests
+    if: github.event_name != 'schedule'
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -134,6 +161,7 @@ jobs:
 
   api-tests:
     name: API Tests
+    if: github.event_name != 'schedule'
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -148,6 +176,87 @@ jobs:
           base-url: ''
           mode: api
 
+  codeql:
+    name: CodeQL Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          build-mode: none
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:javascript-typescript"
+
+      - name: Post CodeQL results to PR
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          alerts=$(gh api "repos/${REPO}/code-scanning/alerts?ref=${REF}&state=open&per_page=100" 2>/dev/null || echo '[]')
+          count=$(jq 'length' <<<"$alerts")
+          critical=$(jq '[.[] | select(.rule.security_severity_level == "critical")] | length' <<<"$alerts")
+          high=$(jq     '[.[] | select(.rule.security_severity_level == "high")]     | length' <<<"$alerts")
+          medium=$(jq   '[.[] | select(.rule.security_severity_level == "medium")]   | length' <<<"$alerts")
+          low=$(jq      '[.[] | select(.rule.security_severity_level == "low" or (.rule.security_severity_level | not))] | length' <<<"$alerts")
+
+          icon=':white_check_mark:'
+          if [ $((critical + high)) -gt 0 ]; then icon=':x:'; fi
+
+          body="## $icon CodeQL Security Scan"$'\n\n'
+          if [ "$count" -eq 0 ]; then
+            body+=':tada: **No security alerts found.**'$'\n'
+          else
+            body+="**$count alert(s) found:**"$'\n\n'
+            [ "$critical" -gt 0 ] && body+=":red_circle: **$critical critical** "
+            [ "$high" -gt 0 ]     && body+=":orange_circle: **$high high** "
+            [ "$medium" -gt 0 ]   && body+=":yellow_circle: **$medium medium** "
+            [ "$low" -gt 0 ]      && body+=":white_circle: **$low low/note** "
+            body+=$'\n\n| Severity | Rule | File | Message |\n|---|---|---|---|\n'
+            rows=$(jq -r '
+              sort_by(.rule.security_severity_level) | .[] |
+              {
+                sev: (
+                  if   .rule.security_severity_level == "critical" then ":red_circle: Critical"
+                  elif .rule.security_severity_level == "high"     then ":orange_circle: High"
+                  elif .rule.security_severity_level == "medium"   then ":yellow_circle: Medium"
+                  else ":white_circle: Low" end
+                ),
+                rule: .rule.id,
+                file: (.most_recent_instance.location.path // ""),
+                line: (.most_recent_instance.location.start_line // 0),
+                msg: ((.most_recent_instance.message.text | gsub("[\r\n]+"; " ")) | .[0:100])
+              } |
+              "| \(.sev) | `\(.rule)` | `\(.file)`\(if .line > 0 then "#L\(.line)" else "" end) | \(.msg) |"
+            ' <<<"$alerts")
+            body+="$rows"$'\n'
+          fi
+          body+=$'\n<!-- codeql-bot -->'
+
+          existing=$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate --jq '.[] | select(.body | contains("<!-- codeql-bot -->")) | .id' 2>/dev/null | head -1 || true)
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/${REPO}/issues/comments/${existing}" -f body="$body" > /dev/null
+          else
+            gh pr comment "$PR" --repo "$REPO" --body "$body"
+          fi
+
+  # ============================================================
+  # PR-only: SBOM + DT scan with HTML report + gate
+  # ============================================================
   sbom-scan:
     name: SBOM + DT scan
     needs: build
@@ -168,7 +277,6 @@ jobs:
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
 
-      # build-cyclonedx-sbom auto-detects bun.lock and routes to syft.
       - name: Build CycloneDX SBOM
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
         uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.2.1
@@ -207,6 +315,7 @@ jobs:
           project-name: ${{ env.DT_COMPONENT }}
           project-version: pr-${{ github.event.pull_request.number }}
           fail-on-severity: critical
+          gate-mode: error
           pr-number: ${{ github.event.pull_request.number }}
           repo: ${{ github.repository }}
           github-token: ${{ github.token }}
@@ -221,3 +330,437 @@ jobs:
           name: dt-findings
           path: dt-findings.html
           if-no-files-found: warn
+
+  # ============================================================
+  # Release flow (push to main, or workflow_dispatch)
+  # ============================================================
+  release-please:
+    name: Release Please
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    # Failure here (e.g. unparseable commit messages) should not block a
+    # workflow_dispatch deploy. Downstream jobs gate on this output but
+    # tolerate the job itself failing.
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.rp.outputs.release_created }}
+      tag_name: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - uses: actions/checkout@v6
+
+      # GitHub App token so the release PR is authored by the App, not
+      # github-actions[bot]. PRs from the default GITHUB_TOKEN don't trigger
+      # downstream workflow runs (anti-recursion), so required checks never
+      # fire. The App token is unaffected.
+      - name: Run release-please with App token
+        id: rp
+        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v2.2.1
+        with:
+          app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
+          app-private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # release-please populates tag/version when it cuts a release. For
+      # publish_release dispatches (rebuild an existing tag whose first run
+      # failed), fall back to the manifest version.
+      - id: version
+        shell: bash
+        env:
+          RP_TAG: ${{ steps.rp.outputs.tag_name }}
+          PUBLISH_RELEASE: ${{ inputs.publish_release }}
+        run: |
+          set -euo pipefail
+          if [ -n "${RP_TAG:-}" ]; then
+            echo "tag=$RP_TAG" >> "$GITHUB_OUTPUT"
+            echo "value=${RP_TAG#v}" >> "$GITHUB_OUTPUT"
+          elif [ "${PUBLISH_RELEASE:-false}" = "true" ]; then
+            v=$(jq -r '."."' .release-please-manifest.json)
+            echo "tag=v$v" >> "$GITHUB_OUTPUT"
+            echo "value=$v" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-and-publish:
+    name: Build and Publish
+    needs: [release-please, lint, typecheck, test, build, ui-tests, api-tests, codeql]
+    if: |
+      always()
+      && needs.lint.result == 'success'
+      && needs.typecheck.result == 'success'
+      && needs.test.result == 'success'
+      && needs.build.result == 'success'
+      && needs.ui-tests.result == 'success'
+      && needs.api-tests.result == 'success'
+      && needs.codeql.result == 'success'
+      && (
+        needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
+      )
+    runs-on: ubuntu-latest
+    outputs:
+      image-ref: ${{ steps.meta.outputs.ref }}
+      image: ${{ steps.meta.outputs.image }}
+      version: ${{ steps.version.outputs.value }}
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Resolve image version
+        id: version
+        shell: bash
+        run: |
+          if [[ -n "${{ needs.release-please.outputs.version || '' }}" ]]; then
+            v="${{ needs.release-please.outputs.version }}"
+          else
+            v="$(cat version.txt | tr -d '[:space:]')-sha.$(echo ${{ github.sha }} | cut -c1-7)"
+          fi
+          echo "value=$v" >> "$GITHUB_OUTPUT"
+
+      - name: Compute image metadata
+        id: meta
+        shell: bash
+        run: |
+          IMG=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          VER="${{ steps.version.outputs.value }}"
+          {
+            echo "image=$IMG"
+            echo "tags=${IMG}:${VER},${IMG}:latest"
+            echo "ref=${IMG}:${VER}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push container image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/api/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          provenance: true
+          sbom: true
+
+      - name: Attest image provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ${{ steps.meta.outputs.image }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  generate-sbom:
+    name: Generate SBOM
+    needs: [release-please, build-and-publish]
+    if: always() && needs.build-and-publish.result == 'success'
+    runs-on: ubuntu-latest
+    environment: azure
+    outputs:
+      findings-url: ${{ steps.findings.outputs.blob-url }}
+      storage-account: ${{ steps.storage.outputs.name }}
+    env:
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'portfolio' }}
+      DT_HOST: ${{ secrets.DT_HOST }}
+      DT_API_KEY: ${{ secrets.DT_API_KEY }}
+      DT_DOMAIN: portfolio
+      DT_SYSTEM: hoobi-portfolio
+      DT_COMPONENT: site
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install dependencies
+        uses: ./operations/pipelines/install-deps
+
+      - name: Build CycloneDX SBOM via pipeline-tools (image + app)
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.2.1
+        with:
+          image: ${{ needs.build-and-publish.outputs.image-ref }}
+          app-language: node
+          app-manifest-path: .
+          output-path: packages/api/public/sbom.cdx.json
+
+      - name: Upload SBOM artifact (for release attachment + downstream jobs)
+        uses: actions/upload-artifact@v7
+        with:
+          name: sbom
+          path: packages/api/public/sbom.cdx.json
+          if-no-files-found: error
+
+      - name: Attest SBOM
+        uses: actions/attest-sbom@v4
+        with:
+          subject-path: packages/api/public/sbom.cdx.json
+          sbom-path: packages/api/public/sbom.cdx.json
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Discover existing storage account in RG
+        id: storage
+        shell: bash
+        run: |
+          set -euo pipefail
+          name=$(az storage account list \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query "[?starts_with(name, 'hoobiportfoliosbom')].name | [0]" \
+            -o tsv 2>/dev/null || echo "")
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          if [ -n "$name" ]; then
+            echo "Found storage account: $name"
+          else
+            echo "::notice::No portfolio storage account yet (first deploy?). Skipping blob uploads."
+          fi
+
+      - name: Upload SBOM to Azure Blob (public-read)
+        if: steps.storage.outputs.name != ''
+        env:
+          VERSION: ${{ needs.build-and-publish.outputs.version }}
+          STORAGE: ${{ steps.storage.outputs.name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          az storage blob upload \
+            --account-name "$STORAGE" --container-name sbom \
+            --name "${VERSION}/sbom.cdx.json" \
+            --file packages/api/public/sbom.cdx.json \
+            --content-type application/vnd.cyclonedx+json \
+            --overwrite --auth-mode login
+          az storage blob upload \
+            --account-name "$STORAGE" --container-name sbom \
+            --name "latest/sbom.cdx.json" \
+            --file packages/api/public/sbom.cdx.json \
+            --content-type application/vnd.cyclonedx+json \
+            --overwrite --auth-mode login
+
+      - name: Upload SBOM to Dependency-Track
+        if: env.DT_HOST != '' && env.DT_API_KEY != ''
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.2.1
+        with:
+          bom-path: packages/api/public/sbom.cdx.json
+          upload-artifact: 'false'
+          server-url: https://${{ env.DT_HOST }}
+          api-key: ${{ env.DT_API_KEY }}
+          domain: ${{ env.DT_DOMAIN }}
+          system: ${{ env.DT_SYSTEM }}
+          component: ${{ env.DT_COMPONENT }}
+          channel: ${{ (needs.release-please.outputs.release_created == 'true' || inputs.publish_release == true) && 'release' || 'main' }}
+          default-branch: main
+          project-version: ${{ needs.build-and-publish.outputs.version }}
+          project-tags: repo=${{ github.repository }},commit=${{ github.sha }},run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          mark-latest: ${{ needs.release-please.outputs.release_created == 'true' || inputs.publish_release == true }}
+          prune-stale-children: ${{ needs.release-please.outputs.release_created != 'true' && inputs.publish_release != true }}
+          keep: '10'
+          ci-keep: '3'
+
+      - name: Pull DT findings -> Azure Blob
+        id: findings
+        if: env.DT_HOST != '' && env.DT_API_KEY != '' && steps.storage.outputs.name != ''
+        continue-on-error: true
+        uses: ./operations/pipelines/dt-findings-to-blob
+        with:
+          dt-host: ${{ env.DT_HOST }}
+          dt-api-key: ${{ env.DT_API_KEY }}
+          project-name: ${{ env.DT_COMPONENT }}
+          project-version: ${{ needs.build-and-publish.outputs.version }}
+          azure-storage-account: ${{ steps.storage.outputs.name }}
+
+  publish-draft-release:
+    name: Publish draft release
+    needs: [release-please, build-and-publish, generate-sbom]
+    if: |
+      needs.release-please.outputs.release_created == 'true' ||
+      inputs.publish_release == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download SBOM
+        uses: actions/download-artifact@v8
+        with:
+          name: sbom
+          path: release
+
+      - name: Attach SBOM to draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" release/sbom.cdx.json --clobber --repo "${{ github.repository }}"
+
+      # The full trust signal (with linked SBOM asset + linked CodeQL run)
+      # is composed in publish-release. Here we add a "verification pending"
+      # marker so the draft is never published without explicit verification.
+      - name: Provisional trust signal (pre-CodeQL)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+          IMAGE_REF: ${{ needs.build-and-publish.outputs.image-ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BODY=$(gh release view "$TAG" --repo "${{ github.repository }}" --json body --jq '.body // ""')
+          TRUST=$'\n\n---\n'
+          TRUST+="> ✅ Image: \`${IMAGE_REF}\`"$'\n'
+          TRUST+="> ⏳ Verification pending (SBOM + CodeQL). Release stays in draft until verified."
+          gh release edit "$TAG" --repo "${{ github.repository }}" --notes "${BODY}${TRUST}"
+
+  deploy:
+    name: Deploy to Azure
+    needs: [release-please, build-and-publish, generate-sbom, publish-draft-release]
+    if: |
+      always() && needs.build-and-publish.result == 'success' && needs.generate-sbom.result != 'cancelled' && (
+        needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
+      )
+    runs-on: ubuntu-latest
+    environment: azure
+    outputs:
+      fqdn: ${{ steps.deploy.outputs.fqdn }}
+      storage: ${{ steps.deploy.outputs.storage-account }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy Bicep template
+        id: deploy
+        uses: ./operations/pipelines/deploy-bicep
+        with:
+          resource-group: ${{ vars.AZURE_RESOURCE_GROUP || 'portfolio' }}
+          parameters-file: operations/variables/prod.bicepparam
+          template-file: operations/provision/main.bicep
+          container-image: ${{ needs.build-and-publish.outputs.image-ref }}
+          app-version: ${{ needs.build-and-publish.outputs.version }}
+          findings-url: ${{ needs.generate-sbom.outputs.findings-url || '' }}
+
+      # Bicep ingress overwrites custom-domain bindings on each deploy. Re-bind
+      # hoobi.io to the pre-uploaded Cloudflare Origin CA cert so the proxied
+      # CNAME from Cloudflare keeps working.
+      - name: Re-bind custom hostname + cert
+        env:
+          RG: ${{ vars.AZURE_RESOURCE_GROUP || 'portfolio' }}
+          APP: hoobiportfolio-app
+          HOSTNAME: ${{ vars.CUSTOM_HOSTNAME || 'hoobi.io' }}
+          CERT_NAME: ${{ vars.ORIGIN_CERT_NAME || 'cloudflare-origin' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          az containerapp hostname add \
+            --resource-group "$RG" \
+            --name "$APP" \
+            --hostname "$HOSTNAME" || true
+          ENV_NAME=$(az containerapp show -g "$RG" -n "$APP" --query "properties.environmentId" -o tsv | awk -F/ '{print $NF}')
+          found=$(az containerapp env certificate list -g "$RG" -n "$ENV_NAME" \
+            --query "[?name=='$CERT_NAME'].name | [0]" -o tsv 2>/dev/null || echo "")
+          if [ -n "$found" ]; then
+            az containerapp hostname bind \
+              --resource-group "$RG" \
+              --name "$APP" \
+              --hostname "$HOSTNAME" \
+              --environment "$ENV_NAME" \
+              --certificate "$CERT_NAME" \
+              --validation-method TXT || true
+            echo "Bound $HOSTNAME -> $CERT_NAME"
+          else
+            echo "::warning::Cert '$CERT_NAME' not found in env '$ENV_NAME'; skipping hostname bind"
+          fi
+
+  pdt-prod:
+    name: PDT (Production)
+    needs: deploy
+    if: always() && needs.deploy.result == 'success' && needs.deploy.outputs.fqdn != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install dependencies
+        uses: ./operations/pipelines/install-deps
+      - name: Run PDT against production
+        uses: ./operations/pipelines/test-pdt
+        with:
+          base-url: https://${{ needs.deploy.outputs.fqdn }}
+          mode: all
+
+  publish-release:
+    name: Publish release
+    needs: [release-please, build-and-publish, codeql, pdt-prod]
+    if: |
+      always()
+      && needs.codeql.result == 'success'
+      && needs.pdt-prod.result == 'success'
+      && (
+        needs.release-please.outputs.release_created == 'true' ||
+        inputs.publish_release == true
+      )
+    runs-on: ubuntu-latest
+    steps:
+      # GITHUB_TOKEN can't edit App-created resources (the draft release was
+      # authored by the release-please App), so mint an App token here too.
+      - name: Mint release-please App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Resolve CodeQL run URL
+        id: codeql-url
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # CodeQL ran as a sibling job in this same workflow. Look it up by
+          # head_sha so the trust signal links to it.
+          run=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=${SHA}&per_page=100" \
+            --jq '.workflow_runs[] | select(.name=="CI") | {id, conclusion}' | head -1)
+          # The CI run id is the current run; the CodeQL job inside it is what
+          # we want to link to. Use the current run page (it shows all jobs).
+          echo "url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+          echo "id=${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+
+      - name: Compose final trust signal
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+          IMAGE_REF: ${{ needs.build-and-publish.outputs.image-ref }}
+          CODEQL_URL: ${{ steps.codeql-url.outputs.url }}
+          CODEQL_ID: ${{ steps.codeql-url.outputs.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          SBOM_URL="${{ github.server_url }}/${{ github.repository }}/releases/download/${TAG}/sbom.cdx.json"
+          # Strip the provisional footer (everything from the first `---` line
+          # onwards) so we replace it cleanly.
+          BODY=$(gh release view "$TAG" --repo "${{ github.repository }}" --json body --jq '.body // ""' \
+            | awk '/^---$/{exit} {print}')
+          TRUST=$'\n\n---\n'
+          TRUST+="> ✅ Image: \`${IMAGE_REF}\`"$'\n'
+          TRUST+="> 📦 [SBOM (CycloneDX)](${SBOM_URL}) · attested · uploaded to Dependency-Track"$'\n'
+          TRUST+="> 🛡️ [CodeQL run #${CODEQL_ID}](${CODEQL_URL}) — success"
+          gh release edit "$TAG" --repo "${{ github.repository }}" --notes "${BODY}${TRUST}"
+
+      - name: Mark draft release as live
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        shell: bash
+        run: gh release edit "$TAG" --repo "${{ github.repository }}" --draft=false
