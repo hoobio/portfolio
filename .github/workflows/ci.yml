@@ -201,12 +201,16 @@ jobs:
       - uses: actions/checkout@v6
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
-      - name: Build web + api + SBOM
-        uses: ./operations/pipelines/build-bundle
-      - name: Run Playwright (local dev server)
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: build-${{ github.run_id }}
+          path: build-artifact
+      - name: Run Playwright against runtime container
         uses: ./operations/pipelines/test-pdt
         with:
           base-url: ''
+          image-tar-path: build-artifact/image.tar
           mode: ui
 
   api-tests:
@@ -218,12 +222,16 @@ jobs:
       - uses: actions/checkout@v6
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
-      - name: Build web + api + SBOM
-        uses: ./operations/pipelines/build-bundle
-      - name: Run Bruno (local dev server)
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: build-${{ github.run_id }}
+          path: build-artifact
+      - name: Run Bruno against runtime container
         uses: ./operations/pipelines/test-pdt
         with:
           base-url: ''
+          image-tar-path: build-artifact/image.tar
           mode: api
 
   codeql:

@@ -1,15 +1,24 @@
 name: PDT - Playwright + Bruno
 description: |
   Production Deployment Tests. Runs Playwright UI tests and Bruno API tests
-  against a base URL. If `base-url` is set, runs the `remote` projects against
-  it. Otherwise spins up the dev server and runs the `local` projects.
+  against the API. Resolution order for the target:
+
+  1. `base-url` set -> runs the `remote` projects against it.
+  2. `image-tar-path` set -> `docker load` the tar, `docker run` it on
+     port 8090, and run the `local` projects against the container.
+  3. Neither set -> spawn `node packages/api/dist/server.js` and run the
+     `local` projects against that.
 
   `mode` controls which suite(s) run: `ui` (Playwright only), `api`
   (Bruno only), or `all` (both, default).
 
 inputs:
   base-url:
-    description: Remote URL to test (omit for local dev-server run)
+    description: Remote URL to test (omit for local container or dev-server run)
+    required: false
+    default: ''
+  image-tar-path:
+    description: Path to a `docker save` tar. When set, the action loads it and runs the container on port 8090 instead of spawning node directly.
     required: false
     default: ''
   install-playwright-browsers:
@@ -29,6 +38,42 @@ runs:
       shell: bash
       run: pnpm exec playwright install --with-deps chromium
 
+    # When an image tar is provided, load it and start the runtime container
+    # so Bruno + Playwright hit the exact artefact the release would push.
+    # The container name is fixed so the cleanup step can find it.
+    - name: Start container from image tar
+      if: ${{ inputs.base-url == '' && inputs.image-tar-path != '' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        TAR="${{ inputs.image-tar-path }}"
+        if [ ! -f "$TAR" ]; then
+          echo "::error::image-tar-path '$TAR' does not exist"
+          exit 1
+        fi
+        # `docker load` prints e.g. "Loaded image: hoobi-portfolio-build:123".
+        # Capture the tag so we don't need it passed in separately.
+        TAG=$(docker load -i "$TAR" | sed -nE 's/^Loaded image:[[:space:]]+(.+)$/\1/p' | head -1)
+        if [ -z "$TAG" ]; then
+          echo "::error::could not parse loaded image tag from docker load output"
+          exit 1
+        fi
+        echo "Starting container from $TAG"
+        docker run -d --rm --name hoobi-api -p 8090:8090 "$TAG"
+        # Wait up to 60s for /api/health to respond.
+        for i in {1..120}; do
+          if curl -fs http://localhost:8090/api/health > /dev/null 2>&1; then
+            echo "API healthy after ${i} attempts"
+            break
+          fi
+          if [ "$i" = "120" ]; then
+            echo "::error::API never became healthy"
+            docker logs hoobi-api || true
+            exit 1
+          fi
+          sleep 0.5
+        done
+
     - name: Playwright UI tests
       if: ${{ inputs.mode == 'ui' || inputs.mode == 'all' }}
       shell: bash
@@ -37,6 +82,9 @@ runs:
       run: |
         if [ -n "${{ inputs.base-url }}" ]; then
           pnpm exec playwright test --project=remote
+        elif [ -n "${{ inputs.image-tar-path }}" ]; then
+          # Container already up from the previous step.
+          pnpm exec playwright test --project=local
         else
           pnpm run test:e2e
         fi
@@ -50,6 +98,9 @@ runs:
         set -euo pipefail
         if [ -n "${{ inputs.base-url }}" ]; then
           (cd tests/api && pnpm exec bru run . --env remote) 2>&1 | tee bruno-output.txt
+        elif [ -n "${{ inputs.image-tar-path }}" ]; then
+          # Container already up from the previous step.
+          (cd tests/api && pnpm exec bru run . --env local) 2>&1 | tee bruno-output.txt
         else
           # Start the API ourselves so we see Bruno's stdout directly
           # (start-server-and-test buffers the inner command). Kill the
@@ -66,6 +117,21 @@ runs:
           done
           (cd tests/api && pnpm exec bru run . --env local) 2>&1 | tee bruno-output.txt
         fi
+
+    - name: Capture container logs
+      if: ${{ always() && inputs.base-url == '' && inputs.image-tar-path != '' }}
+      shell: bash
+      run: |
+        docker logs hoobi-api > container.log 2>&1 || true
+        docker stop hoobi-api > /dev/null 2>&1 || true
+
+    - name: Upload container logs
+      if: ${{ always() && inputs.base-url == '' && inputs.image-tar-path != '' }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: container-logs-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.mode }}
+        path: container.log
+        if-no-files-found: ignore
 
     - name: Upload Playwright report
       if: ${{ always() && (inputs.mode == 'ui' || inputs.mode == 'all') }}
