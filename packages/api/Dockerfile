@@ -1,9 +1,14 @@
 # syntax=docker/dockerfile:1.7-labs
 FROM node:24-alpine AS deps
+# Pull latest alpine package patches into the base layer. The default
+# node:24-alpine image lags upstream alpine security releases by a few
+# days; `apk upgrade` picks up musl + busybox patches that the image
+# hasn't yet been rebuilt with.
+RUN apk --no-cache upgrade
 RUN corepack enable && corepack prepare pnpm@11.2.2 --activate
-# CI=true is what tells pnpm to error rather than prompt when its
-# pre-run deps-status check decides node_modules needs refreshing.
-# Without it, the build stage's `pnpm run build` aborts with
+# CI=true tells pnpm to error rather than prompt when its pre-run
+# deps-status check decides node_modules needs refreshing. Without it,
+# the build stage's `pnpm run build` aborts with
 # ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY inside Docker.
 ENV CI=true
 WORKDIR /app
@@ -18,14 +23,14 @@ COPY . .
 RUN pnpm --filter @hoobi-portfolio/web run build \
  && pnpm --filter @hoobi-portfolio/api run build
 
-# Assemble a self-contained runtime tree: only api's prod deps, workspace
-# refs inlined. `--legacy` is required because the workspace isn't set up
-# with `inject-workspace-packages=true` (which would change install
-# semantics across all workflows); the warning emitted is benign.
+# Assemble a self-contained runtime tree with prod deps only. Requires
+# `injectWorkspacePackages: true` in pnpm-workspace.yaml so the deploy
+# stage inlines workspace refs (e.g. @hoobi-portfolio/schemas).
 FROM build AS deploy
-RUN pnpm --filter @hoobi-portfolio/api deploy --legacy --prod /tmp/api-deploy
+RUN pnpm --filter @hoobi-portfolio/api deploy --prod /tmp/api-deploy
 
 FROM node:24-alpine AS runtime
+RUN apk --no-cache upgrade
 ENV NODE_ENV=production
 ENV PORT=8090
 ENV HOST=0.0.0.0

@@ -1,6 +1,12 @@
 packages:
   - packages/*
 
+# pnpm v10+ requires this opt-in for `pnpm deploy` to assemble a
+# self-contained workspace-aware tree without `--legacy`. Without it,
+# deploy falls back to a path that doesn't always strip devDependencies
+# cleanly under hoisted node_modules.
+injectWorkspacePackages: true
+
 # Build scripts must be allow-listed explicitly in pnpm v10+. esbuild needs
 # its install-time postinstall to drop the native binary into node_modules;
 # protobufjs ships with @bufbuild deps used by playwright tooling.
