@@ -7,7 +7,7 @@
   "include-component-in-tag": false,
   "draft": true,
   "prerelease": false,
-  "separate-pull-requests": false,
+  "separate-pull-requests": true,
   "pull-request-title-pattern": "chore: release v${version}",
   "pull-request-header": "This PR was generated automatically by [release-please](https://github.com/googleapis/release-please).",
   "changelog-path": "CHANGELOG.md",
