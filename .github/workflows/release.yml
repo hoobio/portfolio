@@ -50,7 +50,7 @@ jobs:
       # leaves required checks unsatisfied. The App token is unaffected.
       - name: Run release-please with App token
         id: rp
-        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v1.6.0
+        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v2.1.0
         with:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
           app-private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
@@ -116,10 +116,10 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -127,7 +127,7 @@ jobs:
 
       - name: Build and push container image
         id: push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: packages/api/Dockerfile
@@ -184,13 +184,13 @@ jobs:
           if-no-files-found: error
 
       - name: Attest SBOM
-        uses: actions/attest-sbom@v3
+        uses: actions/attest-sbom@v4
         with:
           subject-path: packages/api/public/sbom.cdx.json
           sbom-path: packages/api/public/sbom.cdx.json
 
       - name: Azure login (OIDC)
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           client-id: ${{ env.AZURE_CLIENT_ID }}
@@ -321,7 +321,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Azure login (OIDC)
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
