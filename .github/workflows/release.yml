@@ -50,7 +50,7 @@ jobs:
       # leaves required checks unsatisfied. The App token is unaffected.
       - name: Run release-please with App token
         id: rp
-        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v2.1.0
+        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v2.2.0
         with:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
           app-private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
@@ -170,7 +170,7 @@ jobs:
       # build-cyclonedx-sbom merges a container scan (syft) with the
       # application scan (auto-detects bun.lock and routes to syft for bun).
       - name: Build CycloneDX SBOM via pipeline-tools (image + app)
-        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@feat/bun-node-scan-and-pr-gate
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.2.0
         with:
           image: ${{ needs.build-and-publish.outputs.image-ref }}
           app-language: node
@@ -237,7 +237,7 @@ jobs:
       - name: Upload SBOM to Dependency-Track
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
         continue-on-error: true
-        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.1.0
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.2.0
         with:
           bom-path: packages/api/public/sbom.cdx.json
           upload-artifact: 'false'
