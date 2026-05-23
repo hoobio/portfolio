@@ -19,10 +19,7 @@ export function Skills({ skills }: { skills: Portfolio['skills'] }) {
         {skills.map((g) => (
           <div key={g.id} className="rounded-lg border border-bg-elev-2 bg-bg-elev p-4">
             <div className="flex items-baseline justify-between gap-2">
-              <h3 className="text-base text-accent-yellow">
-                <span className="text-text-mute">- </span>
-                {g.title}
-              </h3>
+              <h3 className="text-base text-accent-yellow">{g.title}</h3>
               <span
                 className={clsx(
                   'rounded-sm border px-1.5 py-0.5 text-[10px] uppercase tracking-wider font-mono',

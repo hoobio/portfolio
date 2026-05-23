@@ -76,6 +76,38 @@ groups:
       - release-please
       - SBOM and provenance attestation gates
 
+  - id: data-and-platform-services
+    title: Data & platform services
+    level: deep
+    skills:
+      - Cosmos DB (multi-region, automatic failover)
+      - Azure Storage
+      - Azure Service Bus
+      - Azure SQL
+      - MSSQL
+      - PostgreSQL (Managed and Self-Hosted)
+      - MongoDB
+
+  - id: observability-platform
+    title: Observability
+    level: deep
+    skills:
+      - Application Insights / Log Analytics (and Kusto)
+      - Grafana
+      - Loki
+      - Prometheus
+      - Datadog
+      - PagerDuty
+
+  - id: compliance
+    title: Compliance
+    level: deep
+    skills:
+      - FedRAMP
+      - SOC-2
+      - GDPR (data residency, claim-based regional routing)
+      - PCI-aware workload patterns
+
   - id: languages
     title: Languages
     level: working
@@ -96,26 +128,6 @@ groups:
       - Fluent UI
       - HTML / CSS
       - ASP.NET (backend)
-
-  - id: data-and-platform-services
-    title: Data & platform services
-    level: working
-    skills:
-      - Cosmos DB (multi-region, automatic failover)
-      - Azure Storage
-      - Azure Service Bus
-      - Application Insights / Log Analytics
-      - Datadog
-      - PagerDuty
-
-  - id: compliance
-    title: Compliance
-    level: working
-    skills:
-      - FedRAMP
-      - SOC-2
-      - GDPR (data residency, claim-based regional routing)
-      - PCI-aware workload patterns
 
   - id: cloud-cost-optimisation
     title: Cloud cost optimisation
