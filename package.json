@@ -1,6 +1,6 @@
 {
   "name": "hoobi-portfolio",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Living resume and portfolio. Data-driven, served from a Fastify API with a React front end.",
   "license": "MIT",

@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.1.2](https://github.com/hoobio/portfolio/compare/v0.1.1...v0.1.2) (2026-05-23)
+
+
+### Features
+
+* ✨ add publish_release dispatch input for emergency release rebuilds ([95ac3b8](https://github.com/hoobio/portfolio/commit/95ac3b826ccaa073df1a89f577aa01021da7f3f4))
+* ✨ nav active indicator + mobile section picker + shared terminal prompt ([f8afe4c](https://github.com/hoobio/portfolio/commit/f8afe4c0ecf6b9de95c2eb23d623c88c637fc6b8))
+* **ci:** pipeline-tools native SBOM + per-PR DT scan with HTML report ([#12](https://github.com/hoobio/portfolio/issues/12)) ([c9388e9](https://github.com/hoobio/portfolio/commit/c9388e91e0623b717cab30c3bce915423ca70c40))
+
+
+### Bug Fixes
+
+* 🐛 DT channel/mark-latest/prune logic honours publish_release dispatch ([9693a37](https://github.com/hoobio/portfolio/commit/9693a375134eaf7353977ac8b1ec8c13a730e0ab))
+* 🐛 hero test uses new 'shell' tab title ([c9bc0b7](https://github.com/hoobio/portfolio/commit/c9bc0b77e397510a24838e4af3f6c5f182855476))
+* 🐛 install syft in Dockerfile build stage (sbom step needs it) ([6ba4baa](https://github.com/hoobio/portfolio/commit/6ba4baa5f3baba3d40347cc6992e1248249fdcfe))
+
+
+### Miscellaneous Chores
+
+* **deps:** bump actions/attest-sbom from 3 to 4 ([f831f44](https://github.com/hoobio/portfolio/commit/f831f4468368a38e5705af9f1909e16776c6ea8c))
+* **deps:** bump actions/attest-sbom from 3 to 4 ([1ead1fe](https://github.com/hoobio/portfolio/commit/1ead1fe0279fc3b274ecae60da7eb3f468c3cfc2))
+* **deps:** bump azure/login from 2 to 3 ([0c5ff01](https://github.com/hoobio/portfolio/commit/0c5ff01908bc46b3ecc68e27f26d9d60438a8843))
+* **deps:** bump azure/login from 2 to 3 ([76457f0](https://github.com/hoobio/portfolio/commit/76457f0c48175348771a85add82573c1920f72e5))
+* **deps:** bump docker/login-action from 3 to 4 ([0e6d7d8](https://github.com/hoobio/portfolio/commit/0e6d7d83841b0bb49d6622f2e55b24e1845d5063))
+* **deps:** bump docker/login-action from 3 to 4 ([fd80c90](https://github.com/hoobio/portfolio/commit/fd80c905a985d8442e11616cc4891d94aa808a14))
+* **deps:** bump docker/setup-buildx-action from 3 to 4 ([be0d10b](https://github.com/hoobio/portfolio/commit/be0d10bfcfd5f0f855dd5a7a6f5b6ae5b926b5ee))
+* **deps:** bump docker/setup-buildx-action from 3 to 4 ([b348346](https://github.com/hoobio/portfolio/commit/b348346382743b278597c4645e9a9e4591c6d05e))
+* **deps:** bump hoobio/pipeline-tools from 1.6.0 to 2.1.0 ([58991dc](https://github.com/hoobio/portfolio/commit/58991dcb5211d4a7f82cce495285bbbcad8f0367))
+* **deps:** bump hoobio/pipeline-tools from 1.6.0 to 2.1.0 ([04a7178](https://github.com/hoobio/portfolio/commit/04a71781b8c686c6bd26b67b7c4697ff60bd4d49))
+
+
+### Continuous Integration
+
+* 👷 add dependabot (npm + actions + docker) and CodeQL workflow ([9fc8ed5](https://github.com/hoobio/portfolio/commit/9fc8ed584f7f955c77e3ef08020fcb044b7540dd))
+* 👷 dependabot only groups github-actions minor/patch (majors stay individual) ([4fb045f](https://github.com/hoobio/portfolio/commit/4fb045fcbbc079089df216f1e0736647a516dff9))
+
 ## [0.1.1](https://github.com/hoobio/portfolio/compare/v0.1.0...v0.1.1) (2026-05-23)
 
 
