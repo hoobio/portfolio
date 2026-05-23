@@ -295,6 +295,14 @@ jobs:
           scan-github-actions-path: .github/workflows
           output-path: packages/api/public/sbom.cdx.json
 
+      - name: Upload PR SBOM artefact (debug)
+        if: always() && env.DT_HOST != '' && env.DT_API_KEY != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-sbom
+          path: packages/api/public/sbom.cdx.json
+          if-no-files-found: warn
+
       - name: Upload SBOM to Dependency-Track (channel=pr)
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
         uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@feat/sbom-clean-scoping
