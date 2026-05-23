@@ -33,7 +33,7 @@ runs:
       shell: bash
       run: |
         {
-          echo "## Build artefacts"
+          echo "## Build artifacts"
           echo
           du -sh packages/web/dist 2>/dev/null | awk '{print "- web bundle: " $0}'
           du -sh packages/api/dist 2>/dev/null | awk '{print "- api bundle: " $0}'
