@@ -21,13 +21,13 @@ runs:
         mkdir -p packages/api/public/web
         cp -R packages/web/dist/. packages/api/public/web/
 
-    # syft handles bun.lock text-format natively (cdxgen 12.4.x does not).
-    - uses: anchore/sbom-action@v0
+    # build-cyclonedx-sbom auto-detects bun.lock and routes to syft when
+    # found (cyclonedx-npm doesn't read bun lockfiles).
+    - uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@feat/bun-node-scan-and-pr-gate
       with:
-        path: .
-        format: cyclonedx-json
-        output-file: packages/api/public/sbom.cdx.json
-        upload-artifact: false
+        app-language: node
+        app-manifest-path: .
+        output-path: packages/api/public/sbom.cdx.json
 
     - name: Build summary
       shell: bash
