@@ -1,0 +1,69 @@
+version: 2
+updates:
+  # Workflow + composite-action pins (.github/workflows/*.yml, operations/pipelines/*/action.yml)
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Australia/Melbourne
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    labels:
+      - dependencies
+      - github-actions
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # API container base image
+  - package-ecosystem: docker
+    directory: /packages/api
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Australia/Melbourne
+    commit-message:
+      prefix: chore
+      include: scope
+    labels:
+      - dependencies
+      - docker
+
+  # Bun workspace (npm-compatible). Dependabot reads package.json directly;
+  # the bun.lock text format isn't fully understood yet, so PRs target the
+  # manifests and rely on `bun install --frozen-lockfile` in CI to regenerate.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Australia/Melbourne
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore
+      include: scope
+    labels:
+      - dependencies
+      - npm
+    groups:
+      prod-minor-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      dev-minor-patch:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Pin the bun runtime via the engines field; the package.json devDep
+      # lock isn't where we manage it.
+      - dependency-name: "bun"
