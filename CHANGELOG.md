@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.1.4](https://github.com/hoobio/portfolio/compare/v0.1.3...v0.1.4) (2026-05-23)
+
+
+### Features
+
+* ✨ add build/release/SBOM badges to README + native-styled badges in site SBOM section ([2503892](https://github.com/hoobio/portfolio/commit/2503892464960a22289de2c4c34cf59a39412482))
+* ✨ consolidate ci.yml + release.yml + codeql.yml into a single workflow ([5b7df5d](https://github.com/hoobio/portfolio/commit/5b7df5d966cfceaf1d6e26c7636af950fdf2b2d7))
+* ✨ gate publish-release on CodeQL success + link SBOM + CodeQL in trust signal ([ca2deb1](https://github.com/hoobio/portfolio/commit/ca2deb1f67b75835a2fa465b8737e9b1ced9dfc1))
+* ✨ promote data/observability/compliance to deep skills + drop list-marker on group titles ([d611ab1](https://github.com/hoobio/portfolio/commit/d611ab1f33b9d322f409c35afb25846b2c3922be))
+* ✨ show role duration (years + months) under experience date range ([a04ae45](https://github.com/hoobio/portfolio/commit/a04ae45b1d618a0c4a8730bdd669d7bd60a662f8))
+
+
+### Bug Fixes
+
+* 🐛 mint release-please App token for publish-release (GITHUB_TOKEN 401 on App-authored release) ([cb9c9a8](https://github.com/hoobio/portfolio/commit/cb9c9a8ee53b72b01ab06e32ae85e590ecdf19f2))
+* 🐛 wire jsonSchemaTransformObject so Swagger UI resolves $ref schemas ([148ebb2](https://github.com/hoobio/portfolio/commit/148ebb23d3b3c1ec4783daa2975bcef4a2c55956))
+
+
+### Documentation
+
+* 📝 add ADO/GitHub administration + incident management skill groups ([264cd98](https://github.com/hoobio/portfolio/commit/264cd9822b1b8ad7ba7abef337f93f68eda82bf9))
+* 📝 tighten portfolio copy + reclassify Earmark as open-source ([1d0100f](https://github.com/hoobio/portfolio/commit/1d0100faccc4465882ae25ebde51ef7df835c62a))
+* 📝 tweak identity labels + expand observability stack (Mimir, Tempo) + reorder skill groups ([6fe1184](https://github.com/hoobio/portfolio/commit/6fe118468001cc9fe343962003328fe6edbd74f4))
+
 ## [0.1.3](https://github.com/hoobio/portfolio/compare/v0.1.2...v0.1.3) (2026-05-23)
 
 
