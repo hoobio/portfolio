@@ -291,7 +291,11 @@ jobs:
           set -euo pipefail
           gh release upload "$TAG" release/sbom.cdx.json --clobber --repo "${{ github.repository }}"
 
-      - name: Append trust signal to release notes
+      # The full trust signal (with linked SBOM asset + linked CodeQL run) is
+      # composed in the publish-release job once we know CodeQL succeeded.
+      # Here we only add the image reference + a "verification pending" marker
+      # so the draft is never published without explicit verification later.
+      - name: Provisional trust signal (pre-CodeQL)
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.release-please.outputs.tag_name }}
@@ -302,8 +306,7 @@ jobs:
           BODY=$(gh release view "$TAG" --repo "${{ github.repository }}" --json body --jq '.body // ""')
           TRUST=$'\n\n---\n'
           TRUST+="> ✅ Image: \`${IMAGE_REF}\`"$'\n'
-          TRUST+="> 📦 SBOM attested · CycloneDX format · uploaded to Dependency-Track when configured"$'\n'
-          TRUST+="> 🛡️ [CodeQL not enabled yet]"
+          TRUST+="> ⏳ Verification pending (SBOM + CodeQL). Release stays in draft until verified."
           gh release edit "$TAG" --repo "${{ github.repository }}" --notes "${BODY}${TRUST}"
 
   deploy:
@@ -410,6 +413,69 @@ jobs:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+
+      # Gate the release on a successful CodeQL Security Scan run for the
+      # exact merge commit. Polls for up to 15 minutes - CodeQL on a small
+      # JS/TS codebase finishes in a couple of minutes but cold runners can
+      # take longer. Fails the step (and leaves the release as a draft) if
+      # CodeQL didn't succeed, so reviewers don't ship unverified code.
+      - name: Wait for CodeQL on this commit
+        id: codeql
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          deadline=$(( $(date +%s) + 15 * 60 ))
+          run=""
+          while [ "$(date +%s)" -lt "$deadline" ]; do
+            run=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=${SHA}&per_page=100" \
+              --jq '.workflow_runs[] | select(.name=="CodeQL Security Scan") | {id, status, conclusion, url}' \
+              2>/dev/null | head -1 || true)
+            if [ -n "$run" ]; then
+              status=$(echo "$run" | jq -r '.status')
+              conclusion=$(echo "$run" | jq -r '.conclusion // ""')
+              if [ "$status" = "completed" ]; then
+                echo "CodeQL run completed: $conclusion"
+                if [ "$conclusion" = "success" ]; then
+                  echo "id=$(echo "$run" | jq -r '.id')" >> "$GITHUB_OUTPUT"
+                  echo "url=$(echo "$run" | jq -r '.url' | sed 's|api.github.com/repos|github.com|; s|/actions/runs|/actions/runs|')" >> "$GITHUB_OUTPUT"
+                  exit 0
+                fi
+                echo "::error::CodeQL Security Scan concluded '$conclusion' (not success). Release stays in draft."
+                exit 1
+              fi
+              echo "CodeQL still $status (run $(echo "$run" | jq -r '.id'))..."
+            else
+              echo "Waiting for CodeQL Security Scan run on ${SHA} to appear..."
+            fi
+            sleep 20
+          done
+          echo "::error::Timed out waiting for CodeQL Security Scan on ${SHA}."
+          exit 1
+
+      - name: Compose final trust signal
+        id: trust
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+          IMAGE_REF: ${{ needs.build-and-publish.outputs.image-ref }}
+          CODEQL_URL: ${{ steps.codeql.outputs.url }}
+          CODEQL_ID: ${{ steps.codeql.outputs.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          SBOM_URL="${{ github.server_url }}/${{ github.repository }}/releases/download/${TAG}/sbom.cdx.json"
+          # Strip the provisional "Verification pending" footer if present so
+          # we can replace it cleanly with the final block.
+          BODY=$(gh release view "$TAG" --repo "${{ github.repository }}" --json body --jq '.body // ""' \
+            | awk '/^---$/{exit} {print}')
+          TRUST=$'\n\n---\n'
+          TRUST+="> ✅ Image: \`${IMAGE_REF}\`"$'\n'
+          TRUST+="> 📦 [SBOM (CycloneDX)](${SBOM_URL}) · attested · uploaded to Dependency-Track"$'\n'
+          TRUST+="> 🛡️ [CodeQL run #${CODEQL_ID}](${CODEQL_URL}) — success"
+          gh release edit "$TAG" --repo "${{ github.repository }}" --notes "${BODY}${TRUST}"
 
       - name: Mark draft release as live
         env:
