@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3](https://github.com/hoobio/portfolio/compare/v0.1.2...v0.1.3) (2026-05-23)
+
+
+### Bug Fixes
+
+* 🐛 bump pipeline-tools refs to v2.2.1 (chmod/chown fix for SBOM file) ([4b272d3](https://github.com/hoobio/portfolio/commit/4b272d383888f1b4362da2220e676a213606118d))
+* 🐛 stop swallowing DT upload failures (no more continue-on-error) ([dd4b4cd](https://github.com/hoobio/portfolio/commit/dd4b4cd6d8860a237580b0d393deb22ad0fbc5fe))
+
 ## [0.1.2](https://github.com/hoobio/portfolio/compare/v0.1.1...v0.1.2) (2026-05-23)
 
 
