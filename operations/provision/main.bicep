@@ -26,6 +26,9 @@ param appVersion string = 'dev'
 @description('Public Blob URL where the latest findings.json lives. Empty means findings UI hidden.')
 param findingsUrl string = ''
 
+@description('Public Blob URL where the latest CycloneDX SBOM lives. Empty falls back to the image-baked SBOM at /app/public/sbom.cdx.json.')
+param sbomUrl string = ''
+
 @description('Custom hostname to bind to the Container App ingress, e.g. hoobi.io. Empty disables.')
 param customHostname string = ''
 
@@ -47,6 +50,7 @@ module workload 'modules/workload.bicep' = {
     publicBaseUrl: publicBaseUrl
     appVersion: appVersion
     findingsUrl: findingsUrl
+    sbomUrl: sbomUrl
     customHostname: customHostname
     certificateName: certificateName
     tags: tags

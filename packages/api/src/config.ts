@@ -14,5 +14,9 @@ export const config = {
   publicDir: process.env['PUBLIC_DIR'] ?? resolve(here, '../public'),
   webDistDir: process.env['WEB_DIST_DIR'] ?? resolve(here, '../public/web'),
   sbomPath: process.env['SBOM_PATH'] ?? resolve(here, '../public/sbom.cdx.json'),
+  // Prefer the public-read blob URL (refreshed every deploy with full
+  // image + OS + workflows coverage) over the image-baked SBOM. Falls
+  // back to the on-disk file when unset or unreachable.
+  sbomUrl: process.env['SBOM_URL'] ?? '',
   findingsUrl: process.env['FINDINGS_URL'] ?? '',
 } as const;

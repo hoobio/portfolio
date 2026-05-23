@@ -7,6 +7,7 @@ param containerImage string
 param publicBaseUrl string
 param appVersion string
 param findingsUrl string = ''
+param sbomUrl string = ''
 param tags object
 
 @description('Custom hostname to bind to the Container App ingress, e.g. hoobi.io. Empty disables.')
@@ -124,6 +125,7 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
             { name: 'PUBLIC_BASE_URL', value: publicBaseUrl }
             { name: 'APP_VERSION', value: appVersion }
             { name: 'FINDINGS_URL', value: findingsUrl }
+            { name: 'SBOM_URL', value: sbomUrl }
           ]
           probes: [
             {

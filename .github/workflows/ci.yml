@@ -277,21 +277,30 @@ jobs:
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
 
-      # Match the prod scoping the runtime image uses: deploy the api with
-      # `--prod` first, then point syft at that tree. The DT scan and gate
-      # then reflect what visitors actually see at /api/sbom in prod, not
-      # the dev/test tooling we install for CI.
-      - name: Build prod deploy tree (api only, no dev deps)
+      # Build the runtime image locally (load, no push) and scan it with
+      # syft. The image scan picks up alpine OS packages + the prod-only
+      # node_modules tree the Dockerfile assembles via `pnpm deploy --prod`,
+      # which is exactly what visitors see on /api/sbom in prod. Pair with
+      # a scan of .github/workflows for our own actions.
+      - name: Set up Buildx
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        shell: bash
-        run: pnpm --filter @hoobi-portfolio/api deploy --legacy --prod /tmp/api-deploy
+        uses: docker/setup-buildx-action@v4
 
-      - name: Build CycloneDX SBOM (prod app + workflows)
+      - name: Build runtime image locally (no push)
+        if: env.DT_HOST != '' && env.DT_API_KEY != ''
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/api/Dockerfile
+          push: false
+          load: true
+          tags: hoobi-portfolio-pr:${{ github.event.pull_request.number }}
+
+      - name: Build CycloneDX SBOM (image + workflows)
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
         uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@feat/sbom-clean-scoping
         with:
-          app-language: node
-          app-manifest-path: /tmp/api-deploy
+          image: hoobi-portfolio-pr:${{ github.event.pull_request.number }}
           scan-github-actions-path: .github/workflows
           output-path: packages/api/public/sbom.cdx.json
 
@@ -509,6 +518,7 @@ jobs:
     environment: azure
     outputs:
       findings-url: ${{ steps.findings.outputs.blob-url }}
+      sbom-url: ${{ steps.sbom-blob.outputs.latest-url }}
       storage-account: ${{ steps.storage.outputs.name }}
     env:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -574,6 +584,7 @@ jobs:
           fi
 
       - name: Upload SBOM to Azure Blob (public-read)
+        id: sbom-blob
         if: steps.storage.outputs.name != ''
         env:
           VERSION: ${{ needs.build-and-publish.outputs.version }}
@@ -593,6 +604,10 @@ jobs:
             --file packages/api/public/sbom.cdx.json \
             --content-type application/vnd.cyclonedx+json \
             --overwrite --auth-mode login
+          # Expose the latest blob URL so the deploy step can plumb it
+          # into the Container App as SBOM_URL.
+          LATEST_URL="https://${STORAGE}.blob.core.windows.net/sbom/latest/sbom.cdx.json"
+          echo "latest-url=${LATEST_URL}" >> "$GITHUB_OUTPUT"
 
       - name: Upload SBOM to Dependency-Track
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
@@ -698,6 +713,7 @@ jobs:
           container-image: ${{ needs.build-and-publish.outputs.image-ref }}
           app-version: ${{ needs.build-and-publish.outputs.version }}
           findings-url: ${{ needs.generate-sbom.outputs.findings-url || '' }}
+          sbom-url: ${{ needs.generate-sbom.outputs.sbom-url || '' }}
 
   pdt-prod:
     name: PDT (Production)

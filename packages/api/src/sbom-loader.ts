@@ -111,8 +111,15 @@ async function fetchJson<T>(url: string, timeoutMs = 5_000): Promise<T | undefin
 export async function loadSbom(
   path: string,
   findingsUrl?: string,
+  sbomUrl?: string,
 ): Promise<SbomSummaryType | undefined> {
-  const bom = await readJson<CycloneDxBom>(path);
+  // Prefer the blob-hosted SBOM (refreshed every deploy with full image
+  // + OS + workflows coverage). Fall back to the in-image baked SBOM if
+  // the URL is unset or unreachable, then disk-not-found returns
+  // undefined and the route serves a 404.
+  const bom =
+    (sbomUrl ? await fetchJson<CycloneDxBom>(sbomUrl) : undefined) ??
+    (await readJson<CycloneDxBom>(path));
   if (!bom) return undefined;
 
   const sidecarPath = join(dirname(path), 'findings.json');
