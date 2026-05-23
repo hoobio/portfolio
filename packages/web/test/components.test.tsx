@@ -57,7 +57,7 @@ describe('Hero', () => {
   it('progressively reveals the prompt lines', async () => {
     vi.useFakeTimers();
     render(<Hero profile={portfolioFixture.profile} />);
-    expect(screen.getByText('PowerShell')).toBeInTheDocument();
+    expect(screen.getByText('shell')).toBeInTheDocument();
     await vi.advanceTimersByTimeAsync(3000);
     vi.useRealTimers();
     await waitFor(() => {
