@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.5](https://github.com/hoobio/portfolio/compare/v0.1.4...v0.1.5) (2026-05-23)
+
+
+### Miscellaneous Chores
+
+* **deps:** bump docker/build-push-action from 6 to 7 ([#18](https://github.com/hoobio/portfolio/issues/18)) ([dcf6e5a](https://github.com/hoobio/portfolio/commit/dcf6e5a80c0961e63db9d5982e99d445fe9a7cc4))
+* **deps:** migrate bun -&gt; pnpm + clean-scoped SBOM ([#16](https://github.com/hoobio/portfolio/issues/16)) ([3560948](https://github.com/hoobio/portfolio/commit/356094888f84ba6201ec69671fbc7760370bb3dc))
+
+
+### Code Refactoring
+
+* ♻️ bind hoobi.io custom domain in bicep ingress, drop post-deploy CLI rebind ([2696215](https://github.com/hoobio/portfolio/commit/26962158ff8640f2d916687eadaaf376831b3459))
+
 ## [0.1.4](https://github.com/hoobio/portfolio/compare/v0.1.3...v0.1.4) (2026-05-23)
 
 
