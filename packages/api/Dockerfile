@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7-labs
-FROM node:22-alpine AS deps
+FROM node:24-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@11.2.2 --activate
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
@@ -14,12 +14,13 @@ RUN pnpm --filter @hoobi-portfolio/web run build \
  && pnpm --filter @hoobi-portfolio/api run build
 
 # Assemble a self-contained runtime tree: only api's prod deps, workspace
-# refs inlined (`pnpm deploy`). This is what the runtime image ships, and
-# it's also what the CI SBOM step scans against the resulting image.
+# refs inlined. `--legacy` is required because the workspace isn't set up
+# with `inject-workspace-packages=true` (which would change install
+# semantics across all workflows); the warning emitted is benign.
 FROM build AS deploy
-RUN pnpm --filter @hoobi-portfolio/api deploy --prod /tmp/api-deploy
+RUN pnpm --filter @hoobi-portfolio/api deploy --legacy --prod /tmp/api-deploy
 
-FROM node:22-alpine AS runtime
+FROM node:24-alpine AS runtime
 ENV NODE_ENV=production
 ENV PORT=8090
 ENV HOST=0.0.0.0

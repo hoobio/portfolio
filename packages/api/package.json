@@ -6,7 +6,7 @@
   "main": "./dist/server.js",
   "scripts": {
     "dev": "tsx --watch src/server.ts",
-    "build": "esbuild src/server.ts --bundle --platform=node --target=node22 --format=esm --external:fastify --external:@fastify/* --external:fastify-type-provider-zod --external:yaml --external:zod --external:pino-pretty --outfile=dist/server.js --sourcemap",
+    "build": "esbuild src/server.ts --bundle --platform=node --target=node24 --format=esm --external:fastify --external:@fastify/* --external:fastify-type-provider-zod --external:yaml --external:zod --external:pino-pretty --outfile=dist/server.js --sourcemap",
     "start": "node dist/server.js",
     "lint": "oxlint src",
     "typecheck": "tsc --noEmit",

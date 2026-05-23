@@ -7,3 +7,10 @@ packages:
 allowBuilds:
   esbuild: true
   protobufjs: true
+
+# Force-resolve transitive axios to the latest stable. axios 1.13.x has
+# three published critical CVEs (CVE-2026-42043, CVE-2026-42044,
+# CVE-2026-42264); 1.16.x is patched. @usebruno/cli pulls in the
+# vulnerable line transitively so we pin via override.
+overrides:
+  axios: 1.16.1
