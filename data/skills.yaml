@@ -34,9 +34,9 @@ groups:
       - OAuth 2.0
       - OpenID Connect
       - OIDC Federated Credentials
-      - Managed Identity & Workload Identity
+      - Managed & Workload Identity
       - Privileged Identity Management (PIM)
-      - GitHub Apps
+      - GitHub App Auth
       - Entra ID
       - Custom RBAC & ABAC
       - Auth0
@@ -92,10 +92,12 @@ groups:
     title: Observability
     level: deep
     skills:
-      - Application Insights / Log Analytics (and Kusto)
+      - Application Insights / Log Analytics (..and Kusto)
       - Grafana
-      - Loki
       - Prometheus
+      - Mimir
+      - Loki
+      - Tempo
       - Datadog
       - PagerDuty
 
@@ -107,6 +109,17 @@ groups:
       - SOC-2
       - GDPR (data residency, claim-based regional routing)
       - PCI-aware workload patterns
+
+  - id: ai-native-tooling
+    title: AI-native engineering
+    level: deep
+    skills:
+      - Model Context Protocol (MCP) servers
+      - Multi-agent orchestration
+      - Claude Code & Claude Agent SDK
+      - Agentic PR review
+      - Skill / context engineering
+      - Prompt caching strategies
 
   - id: languages
     title: Languages
@@ -139,14 +152,3 @@ groups:
       - AWS Compute Savings Plans
       - Cost analysis + chargeback reporting
       - Right-sizing + commitment laddering
-
-  - id: ai-native-tooling
-    title: AI-native engineering
-    level: deep
-    skills:
-      - Model Context Protocol (MCP) servers
-      - Multi-agent orchestration
-      - Claude Code & Claude Agent SDK
-      - Agentic PR review
-      - Skill / context engineering
-      - Prompt caching strategies
