@@ -17,31 +17,37 @@ concurrency:
 
 jobs:
   lint:
-    name: Lint (oxlint)
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: ./operations/pipelines/install-deps
-      - run: bun run lint
+      - name: Install dependencies
+        uses: ./operations/pipelines/install-deps
+      - name: Run oxlint
+        run: bun run lint
 
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: ./operations/pipelines/install-deps
-      - run: bun run typecheck
+      - name: Install dependencies
+        uses: ./operations/pipelines/install-deps
+      - name: Run tsc --noEmit
+        run: bun run typecheck
 
   test:
-    name: Test + coverage
+    name: Unit Tests and Coverage
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
-      - uses: ./operations/pipelines/install-deps
-      - run: bun run test:coverage
+      - name: Install dependencies
+        uses: ./operations/pipelines/install-deps
+      - name: Run vitest with coverage
+        run: bun run test:coverage
 
       - name: Coverage summary
         if: always()
@@ -83,6 +89,7 @@ jobs:
           fi
 
       - if: always()
+        name: Upload coverage artifact
         uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ github.run_id }}
@@ -90,14 +97,17 @@ jobs:
           if-no-files-found: warn
 
   build:
-    name: Build (web + api + SBOM)
+    name: Build
     needs: [lint, typecheck, test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: ./operations/pipelines/install-deps
-      - uses: ./operations/pipelines/build-bundle
-      - uses: actions/upload-artifact@v7
+      - name: Install dependencies
+        uses: ./operations/pipelines/install-deps
+      - name: Build web + api + SBOM
+        uses: ./operations/pipelines/build-bundle
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
         with:
           name: build-${{ github.run_id }}
           path: |
@@ -106,14 +116,34 @@ jobs:
             packages/api/public/sbom.cdx.json
           if-no-files-found: error
 
-  pdt-local:
-    name: PDT (local dev server) - Playwright + Bruno
+  ui-tests:
+    name: UI Tests
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: ./operations/pipelines/install-deps
-      - uses: ./operations/pipelines/build-bundle
-      - uses: ./operations/pipelines/test-pdt
+      - name: Install dependencies
+        uses: ./operations/pipelines/install-deps
+      - name: Build web + api + SBOM
+        uses: ./operations/pipelines/build-bundle
+      - name: Run Playwright (local dev server)
+        uses: ./operations/pipelines/test-pdt
         with:
           base-url: ''
+          mode: ui
+
+  api-tests:
+    name: API Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install dependencies
+        uses: ./operations/pipelines/install-deps
+      - name: Build web + api + SBOM
+        uses: ./operations/pipelines/build-bundle
+      - name: Run Bruno (local dev server)
+        uses: ./operations/pipelines/test-pdt
+        with:
+          base-url: ''
+          mode: api

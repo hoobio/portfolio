@@ -4,6 +4,9 @@ description: |
   against a base URL. If `base-url` is set, runs the `remote` projects against
   it. Otherwise spins up the dev server and runs the `local` projects.
 
+  `mode` controls which suite(s) run: `ui` (Playwright only), `api`
+  (Bruno only), or `all` (both, default).
+
 inputs:
   base-url:
     description: Remote URL to test (omit for local dev-server run)
@@ -13,16 +16,21 @@ inputs:
     description: Run `playwright install --with-deps`
     required: false
     default: 'true'
+  mode:
+    description: Which suite to run (ui | api | all)
+    required: false
+    default: 'all'
 
 runs:
   using: composite
   steps:
     - name: Install Playwright browsers
-      if: ${{ inputs.install-playwright-browsers == 'true' }}
+      if: ${{ (inputs.mode == 'ui' || inputs.mode == 'all') && inputs.install-playwright-browsers == 'true' }}
       shell: bash
       run: bunx playwright install --with-deps chromium
 
     - name: Playwright UI tests
+      if: ${{ inputs.mode == 'ui' || inputs.mode == 'all' }}
       shell: bash
       env:
         PLAYWRIGHT_BASE_URL: ${{ inputs.base-url }}
@@ -34,6 +42,7 @@ runs:
         fi
 
     - name: Bruno API tests
+      if: ${{ inputs.mode == 'api' || inputs.mode == 'all' }}
       shell: bash
       env:
         BRUNO_BASE_URL: ${{ inputs.base-url }}
@@ -58,9 +67,9 @@ runs:
         fi
 
     - name: Upload Playwright report
-      if: always()
+      if: ${{ always() && (inputs.mode == 'ui' || inputs.mode == 'all') }}
       uses: actions/upload-artifact@v7
       with:
-        name: playwright-report-${{ github.run_id }}-${{ github.run_attempt }}
+        name: playwright-report-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.mode }}
         path: playwright-report/
         if-no-files-found: ignore

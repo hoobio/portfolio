@@ -37,7 +37,8 @@ jobs:
       # github-actions[bot]. PRs created by the default GITHUB_TOKEN do not
       # trigger downstream workflow runs (anti-recursion safeguard), which
       # leaves required checks unsatisfied. The App token is unaffected.
-      - id: rp
+      - name: Run release-please with App token
+        id: rp
         uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v1.6.0
         with:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
@@ -52,8 +53,8 @@ jobs:
           tag="${{ steps.rp.outputs.tag_name }}"
           echo "value=${tag#v}" >> "$GITHUB_OUTPUT"
 
-  build-image:
-    name: Build + push container
+  build-and-publish:
+    name: Build and Publish
     needs: release-please
     if: |
       always() && (
@@ -68,7 +69,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - id: version
+      - name: Resolve image version
+        id: version
         shell: bash
         run: |
           if [[ -n "${{ needs.release-please.outputs.version || '' }}" ]]; then
@@ -78,7 +80,8 @@ jobs:
           fi
           echo "value=$v" >> "$GITHUB_OUTPUT"
 
-      - id: meta
+      - name: Compute image metadata
+        id: meta
         shell: bash
         run: |
           IMG=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
@@ -89,15 +92,18 @@ jobs:
             echo "ref=${IMG}:${VER}"
           } >> "$GITHUB_OUTPUT"
 
-      - uses: docker/setup-buildx-action@v3
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - uses: docker/login-action@v3
+      - name: Login to GHCR
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - id: push
+      - name: Build and push container image
+        id: push
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -114,10 +120,10 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
-  sbom:
-    name: SBOM + Dependency-Track findings
-    needs: [release-please, build-image]
-    if: always() && needs.build-image.result == 'success'
+  generate-sbom:
+    name: Generate SBOM
+    needs: [release-please, build-and-publish]
+    if: always() && needs.build-and-publish.result == 'success'
     runs-on: ubuntu-latest
     environment: azure
     outputs:
@@ -135,10 +141,12 @@ jobs:
       DT_COMPONENT: site
     steps:
       - uses: actions/checkout@v6
-      - uses: ./operations/pipelines/install-deps
+      - name: Install dependencies
+        uses: ./operations/pipelines/install-deps
 
       # syft handles bun.lock text-format natively (cdxgen 12.4.x does not).
-      - uses: anchore/sbom-action@v0
+      - name: Scan with syft (CycloneDX JSON)
+        uses: anchore/sbom-action@v0
         with:
           path: .
           format: cyclonedx-json
@@ -184,7 +192,7 @@ jobs:
       - name: Upload SBOM to Azure Blob (public-read)
         if: steps.storage.outputs.name != ''
         env:
-          VERSION: ${{ needs.build-image.outputs.version }}
+          VERSION: ${{ needs.build-and-publish.outputs.version }}
           STORAGE: ${{ steps.storage.outputs.name }}
         shell: bash
         run: |
@@ -216,7 +224,7 @@ jobs:
           component: ${{ env.DT_COMPONENT }}
           channel: ${{ needs.release-please.outputs.release_created == 'true' && 'release' || 'main' }}
           default-branch: main
-          project-version: ${{ needs.build-image.outputs.version }}
+          project-version: ${{ needs.build-and-publish.outputs.version }}
           project-tags: repo=${{ github.repository }},commit=${{ github.sha }},run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           mark-latest: ${{ needs.release-please.outputs.release_created == 'true' }}
           prune-stale-children: ${{ needs.release-please.outputs.release_created != 'true' }}
@@ -232,12 +240,12 @@ jobs:
           dt-host: ${{ env.DT_HOST }}
           dt-api-key: ${{ env.DT_API_KEY }}
           project-name: ${{ env.DT_COMPONENT }}
-          project-version: ${{ needs.build-image.outputs.version }}
+          project-version: ${{ needs.build-and-publish.outputs.version }}
           azure-storage-account: ${{ steps.storage.outputs.name }}
 
-  attach-and-publish:
-    name: Attach artifacts + publish draft release
-    needs: [release-please, build-image, sbom]
+  publish-draft-release:
+    name: Publish draft release
+    needs: [release-please, build-and-publish, generate-sbom]
     if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -262,7 +270,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.release-please.outputs.tag_name }}
-          IMAGE_REF: ${{ needs.build-image.outputs.image-ref }}
+          IMAGE_REF: ${{ needs.build-and-publish.outputs.image-ref }}
         shell: bash
         run: |
           set -euo pipefail
@@ -273,18 +281,11 @@ jobs:
           TRUST+="> 🛡️ [CodeQL not enabled yet]"
           gh release edit "$TAG" --repo "${{ github.repository }}" --notes "${BODY}${TRUST}"
 
-      - name: Publish draft release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.release-please.outputs.tag_name }}
-        shell: bash
-        run: gh release edit "$TAG" --repo "${{ github.repository }}" --draft=false
-
   deploy:
-    name: Deploy to Azure Container Apps
-    needs: [release-please, build-image, sbom, attach-and-publish]
+    name: Deploy to Azure
+    needs: [release-please, build-and-publish, generate-sbom, publish-draft-release]
     if: |
-      always() && needs.build-image.result == 'success' && needs.sbom.result != 'cancelled' && (
+      always() && needs.build-and-publish.result == 'success' && needs.generate-sbom.result != 'cancelled' && (
         needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
       )
     runs-on: ubuntu-latest
@@ -294,20 +295,22 @@ jobs:
       storage: ${{ steps.deploy.outputs.storage-account }}
     steps:
       - uses: actions/checkout@v6
-      - uses: azure/login@v2
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
         with:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - id: deploy
+      - name: Deploy Bicep template
+        id: deploy
         uses: ./operations/pipelines/deploy-bicep
         with:
           resource-group: ${{ vars.AZURE_RESOURCE_GROUP || 'portfolio' }}
           parameters-file: operations/variables/prod.bicepparam
           template-file: operations/provision/main.bicep
-          container-image: ${{ needs.build-image.outputs.image-ref }}
-          app-version: ${{ needs.build-image.outputs.version }}
-          findings-url: ${{ needs.sbom.outputs.findings-url || '' }}
+          container-image: ${{ needs.build-and-publish.outputs.image-ref }}
+          app-version: ${{ needs.build-and-publish.outputs.version }}
+          findings-url: ${{ needs.generate-sbom.outputs.findings-url || '' }}
 
       # Bicep ingress overwrites custom-domain bindings on each deploy. Re-bind
       # hoobi.io to the pre-uploaded Cloudflare Origin CA cert so the proxied
@@ -348,13 +351,29 @@ jobs:
           fi
 
   pdt-prod:
-    name: PDT (production)
+    name: PDT (Production)
     needs: deploy
     if: always() && needs.deploy.result == 'success' && needs.deploy.outputs.fqdn != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: ./operations/pipelines/install-deps
-      - uses: ./operations/pipelines/test-pdt
+      - name: Install dependencies
+        uses: ./operations/pipelines/install-deps
+      - name: Run PDT against production
+        uses: ./operations/pipelines/test-pdt
         with:
           base-url: https://${{ needs.deploy.outputs.fqdn }}
+          mode: all
+
+  publish-release:
+    name: Publish release
+    needs: [release-please, pdt-prod]
+    if: always() && needs.release-please.outputs.release_created == 'true' && needs.pdt-prod.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark draft release as live
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        shell: bash
+        run: gh release edit "$TAG" --repo "${{ github.repository }}" --draft=false
