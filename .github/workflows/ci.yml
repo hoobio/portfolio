@@ -126,13 +126,40 @@ jobs:
     if: github.event_name != 'schedule'
     needs: [lint, typecheck, test]
     runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.image-meta.outputs.tag }}
     steps:
       - uses: actions/checkout@v6
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Build web + api + SBOM
         uses: ./operations/pipelines/build-bundle
-      - name: Upload build artifact
+
+      # Build the runtime container once here and ship it as an artefact
+      # the rest of the run consumes. sbom-scan loads + scans it,
+      # build-and-publish retags + pushes it - no second `docker build`
+      # anywhere in the run.
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Compute image tag
+        id: image-meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="hoobi-portfolio-build:${GITHUB_RUN_ID}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Build runtime image (output as tar)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/api/Dockerfile
+          push: false
+          tags: ${{ steps.image-meta.outputs.tag }}
+          outputs: type=docker,dest=image.tar
+
+      - name: Upload build artifact (app + image tar)
         uses: actions/upload-artifact@v7
         with:
           name: build-${{ github.run_id }}
@@ -140,6 +167,7 @@ jobs:
             packages/api/dist/
             packages/web/dist/
             packages/api/public/sbom.cdx.json
+            image.tar
           if-no-files-found: error
 
   ui-tests:
@@ -274,33 +302,29 @@ jobs:
       DT_COMPONENT: site
     steps:
       - uses: actions/checkout@v6
-      - name: Install dependencies
-        uses: ./operations/pipelines/install-deps
 
-      # Build the runtime image locally (load, no push) and scan it with
-      # syft. The image scan picks up alpine OS packages + the prod-only
-      # node_modules tree the Dockerfile assembles via `pnpm deploy --prod`,
-      # which is exactly what visitors see on /api/sbom in prod. Pair with
-      # a scan of .github/workflows for our own actions.
-      - name: Set up Buildx
+      # Pull in the image tar that `build` produced and `docker load` it.
+      # Scanning the same artefact downstream consumers will push and run
+      # means the PR DT scan sees exactly what would deploy in prod.
+      - name: Download build artifact
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build runtime image locally (no push)
-        if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: docker/build-push-action@v6
+        uses: actions/download-artifact@v8
         with:
-          context: .
-          file: packages/api/Dockerfile
-          push: false
-          load: true
-          tags: hoobi-portfolio-pr:${{ github.event.pull_request.number }}
+          name: build-${{ github.run_id }}
+          path: build-artifact
+
+      - name: Load runtime image
+        if: env.DT_HOST != '' && env.DT_API_KEY != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker load -i build-artifact/image.tar
 
       - name: Build CycloneDX SBOM (image + workflows)
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
         uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@feat/sbom-clean-scoping
         with:
-          image: hoobi-portfolio-pr:${{ github.event.pull_request.number }}
+          image: ${{ needs.build.outputs.image-tag }}
           scan-github-actions-path: .github/workflows
           output-path: packages/api/public/sbom.cdx.json
 
@@ -465,43 +489,40 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # The Dockerfile no longer generates the in-image SBOM itself - we
-      # generate it here so `docker build`'s context already contains
-      # packages/api/public/sbom.cdx.json. The runtime image then ships an
-      # SBOM that lists just our prod runtime deps + our own GH Actions,
-      # with no syft tooling baked in. The post-publish generate-sbom job
-      # builds a richer SBOM (image OS + app + actions) for DT.
-      #
-      # The SBOM is scoped to prod-only by deploying the api workspace
-      # first (`pnpm deploy --prod`) and pointing syft at that tree: the
-      # script's javascript-package-cataloger reads each installed
-      # package.json so dev deps (Bruno / Playwright / test runners /
-      # build tooling) never appear in what visitors see at /api/sbom.
-      - name: Install dependencies (needed for pnpm deploy)
-        uses: ./operations/pipelines/install-deps
+      # The image was built once in the `build` job and uploaded as part
+      # of build-${{ github.run_id }}. Retag the loaded image with the
+      # release tags and push - no second `docker build` for the run.
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: build-${{ github.run_id }}
+          path: build-artifact
 
-      - name: Build prod deploy tree (api only, no dev deps)
+      - name: Load runtime image
         shell: bash
-        run: pnpm --filter @hoobi-portfolio/api deploy --legacy --prod /tmp/api-deploy
+        run: |
+          set -euo pipefail
+          docker load -i build-artifact/image.tar
 
-      - name: Pre-generate in-image SBOM (prod app + workflows)
-        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@feat/sbom-clean-scoping
-        with:
-          app-language: node
-          app-manifest-path: /tmp/api-deploy
-          scan-github-actions-path: .github/workflows
-          output-path: packages/api/public/sbom.cdx.json
-
-      - name: Build and push container image
+      - name: Retag and push image
         id: push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: packages/api/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          provenance: true
-          sbom: true
+        shell: bash
+        env:
+          BUILT_TAG: ${{ needs.build.outputs.image-tag }}
+          IMG: ${{ steps.meta.outputs.image }}
+          VER: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          docker tag "$BUILT_TAG" "${IMG}:${VER}"
+          docker tag "$BUILT_TAG" "${IMG}:latest"
+          docker push "${IMG}:${VER}"
+          docker push "${IMG}:latest"
+          # Re-pull by tag to capture the registry digest (the `inspect`
+          # form would also work, but pull is the same shape docker/login
+          # already needs in the cache).
+          docker pull --quiet "${IMG}:${VER}" >/dev/null
+          DIGEST=$(docker inspect --format '{{ index .RepoDigests 0 }}' "${IMG}:${VER}" | awk -F'@' '{print $2}')
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
       - name: Attest image provenance
         uses: actions/attest-build-provenance@v4

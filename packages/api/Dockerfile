@@ -1,6 +1,11 @@
 # syntax=docker/dockerfile:1.7-labs
 FROM node:24-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@11.2.2 --activate
+# CI=true is what tells pnpm to error rather than prompt when its
+# pre-run deps-status check decides node_modules needs refreshing.
+# Without it, the build stage's `pnpm run build` aborts with
+# ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY inside Docker.
+ENV CI=true
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY packages/schemas/package.json packages/schemas/
