@@ -39,13 +39,11 @@ RUN pnpm --filter @hoobi-portfolio/api deploy --prod /tmp/api-deploy
 # minimal + daily-rebuilt and skips the npm bundle, which keeps the SBOM
 # scan focused on what we actually ship.
 FROM ${RUNTIME_IMAGE} AS runtime
-# Drop the npm bundle the upstream node:24-alpine ships at
-# /usr/local/lib/node_modules/npm. We use pnpm at build time and run
-# the bundled esbuild output at runtime, so npm is dead weight. Its
-# vendored dependencies (ip-address, brace-expansion 5.0.5, etc.) also
-# generate noise in the SBOM scan. The `|| true` keeps this harmless
-# on a Docker Hardened Image that already ships without npm.
-RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx 2>/dev/null || true
+# dhi.io/node is distroless - no shell, no package manager, just node.
+# That means no RUN steps work here; everything below is COPY/ENV only.
+# Bonus: DHI ships without an npm bundle, so the source of the stale
+# ip-address / brace-expansion entries from previous alpine runs is
+# gone.
 ENV NODE_ENV=production
 ENV PORT=8090
 ENV HOST=0.0.0.0
@@ -64,8 +62,7 @@ ENV WEB_DIST_DIR=/app/public/web
 ENV SBOM_PATH=/app/public/sbom.cdx.json
 
 EXPOSE 8090
-# `node` user exists on node:24-alpine. DHI variants typically default
-# to a non-root user already; drop this line if the configured DHI base
-# doesn't ship a `node` account.
-USER node
+# DHI's node image already runs as a non-root user by default, so no
+# explicit USER is needed. (When swapping back to node:24-alpine, add
+# `USER node` here.)
 CMD ["node", "dist/server.js"]
