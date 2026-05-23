@@ -1,9 +1,10 @@
 # syntax=docker/dockerfile:1.7-labs
 
-# Default to Docker Hardened Image (DHI) for the runtime stage so the OS
-# layer tracks alpine security releases without us baking apk upgrades
-# into every build. CI overrides this via --build-arg when desired.
-ARG RUNTIME_IMAGE=docker.io/dhi/node:24
+# Runtime base. CI passes `--build-arg RUNTIME_IMAGE=...` to flip this
+# to a Docker Hardened Image when the repo's RUNTIME_IMAGE variable is
+# set; otherwise we fall back to plain node:24-alpine (which ships an
+# npm bundle whose vendored deps will pollute the SBOM scan).
+ARG RUNTIME_IMAGE=node:24-alpine
 
 # ----- build stages on plain node:24-alpine (need apk + corepack) -----
 FROM node:24-alpine AS deps
@@ -31,17 +32,11 @@ RUN pnpm --filter @hoobi-portfolio/web run build \
 FROM build AS deploy
 RUN pnpm --filter @hoobi-portfolio/api deploy --prod /tmp/api-deploy
 
-# ----- runtime stage on Docker Hardened Image (DHI) node -----
-# DHI ships a minimal, daily-rebuilt node base whose OS layer keeps pace
-# with upstream alpine security releases (musl, busybox, openssl, etc.)
-# without us having to bake apk upgrades into every build. The image is
-# auth-gated so CI logs into docker.io with DHI_USERNAME / DHI_PULL_SECRET
-# before this stage pulls.
-#
-# RUNTIME_IMAGE is passed as a build arg so the tag stays controlled by
-# the workflow rather than baked into source. Default lands on a known
-# DHI node 24 tag; CI overrides it explicitly via --build-arg.
-ARG RUNTIME_IMAGE=docker.io/dhi/node:24
+# ----- runtime stage -----
+# Pinned via RUNTIME_IMAGE build-arg (declared at the top of the file).
+# When a Docker Hardened Image is configured for this repo the base is
+# minimal + daily-rebuilt and skips the npm bundle, which keeps the SBOM
+# scan focused on what we actually ship.
 FROM ${RUNTIME_IMAGE} AS runtime
 ENV NODE_ENV=production
 ENV PORT=8090
@@ -61,4 +56,8 @@ ENV WEB_DIST_DIR=/app/public/web
 ENV SBOM_PATH=/app/public/sbom.cdx.json
 
 EXPOSE 8090
+# `node` user exists on node:24-alpine. DHI variants typically default
+# to a non-root user already; drop this line if the configured DHI base
+# doesn't ship a `node` account.
+USER node
 CMD ["node", "dist/server.js"]

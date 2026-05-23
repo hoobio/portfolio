@@ -174,12 +174,13 @@ jobs:
           file: packages/api/Dockerfile
           push: false
           tags: ${{ steps.image-meta.outputs.tag }}
-          # `vars.RUNTIME_IMAGE` overrides the Dockerfile's default DHI
-          # pin when set (e.g. to test a specific DHI tag like
-          # `dhi/node:24-alpine3.23`). Otherwise the Dockerfile default
-          # applies.
+          # `vars.RUNTIME_IMAGE` opts into a Docker Hardened Image base
+          # for the runtime stage (e.g.
+          # `docker.io/<your-dhi-org>/dhi-node:24-alpine3.23`). When the
+          # var is unset, fall back to plain `node:24-alpine` so the
+          # build stays green for forks without DHI access.
           build-args: |
-            RUNTIME_IMAGE=${{ vars.RUNTIME_IMAGE || 'docker.io/dhi/node:24' }}
+            RUNTIME_IMAGE=${{ vars.RUNTIME_IMAGE || 'node:24-alpine' }}
           outputs: type=docker,dest=image.tar
 
       - name: Upload build artifact (app + image tar)
