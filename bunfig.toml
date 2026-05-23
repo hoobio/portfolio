@@ -1,8 +1,0 @@
-[install]
-# Default to deterministic installs everywhere; CI overrides nothing.
-frozenLockfile = false
-exact = true
-
-[install.cache]
-# Reduce flakiness on Windows file watchers during dev installs.
-disable = false

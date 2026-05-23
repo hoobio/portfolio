@@ -49,7 +49,7 @@ jobs:
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Run oxlint
-        run: bun run lint
+        run: pnpm run lint
 
   typecheck:
     name: Typecheck
@@ -60,7 +60,7 @@ jobs:
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Run tsc --noEmit
-        run: bun run typecheck
+        run: pnpm run typecheck
 
   test:
     name: Unit Tests and Coverage
@@ -74,7 +74,7 @@ jobs:
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Run vitest with coverage
-        run: bun run test:coverage
+        run: pnpm run test:coverage
 
       - name: Coverage summary
         if: always()
@@ -126,13 +126,62 @@ jobs:
     if: github.event_name != 'schedule'
     needs: [lint, typecheck, test]
     runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.image-meta.outputs.tag }}
+    env:
+      DHI_USERNAME: ${{ secrets.DHI_USERNAME }}
+      DHI_PULL_SECRET: ${{ secrets.DHI_PULL_SECRET }}
     steps:
       - uses: actions/checkout@v6
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Build web + api + SBOM
         uses: ./operations/pipelines/build-bundle
-      - name: Upload build artifact
+
+      # Build the runtime container once here and ship it as an artefact
+      # the rest of the run consumes. sbom-scan loads + scans it,
+      # build-and-publish retags + pushes it - no second `docker build`
+      # anywhere in the run.
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # The runtime stage pulls a Docker Hardened Image (DHI) for node, an
+      # auth-gated registry path that ships a minimal, daily-rebuilt base
+      # without npm bundled (so npm's transitive deps like ip-address /
+      # brace-expansion don't show up in the SBOM scan). Login is gated on
+      # the secrets being present so forks without DHI access can still
+      # build against the fallback `RUNTIME_IMAGE` ARG default.
+      - name: Login to dhi.io (Docker Hardened Images)
+        uses: docker/login-action@v4
+        with:
+          registry: dhi.io
+          username: ${{ secrets.DHI_USERNAME }}
+          password: ${{ secrets.DHI_PULL_SECRET }}
+
+      - name: Compute image tag
+        id: image-meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="hoobi-portfolio-build:${GITHUB_RUN_ID}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Build runtime image (output as tar)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/api/Dockerfile
+          push: false
+          tags: ${{ steps.image-meta.outputs.tag }}
+          # Pin runtime to a Docker Hardened Image (dhi.io/node:24).
+          # Override via vars.RUNTIME_IMAGE if a different DHI tag is
+          # needed; the workflow needs DHI_USERNAME / DHI_PULL_SECRET
+          # secrets set for the login step above to succeed.
+          build-args: |
+            RUNTIME_IMAGE=${{ vars.RUNTIME_IMAGE || 'dhi.io/node:24' }}
+          outputs: type=docker,dest=image.tar
+
+      - name: Upload build artifact (app + image tar)
         uses: actions/upload-artifact@v7
         with:
           name: build-${{ github.run_id }}
@@ -140,6 +189,7 @@ jobs:
             packages/api/dist/
             packages/web/dist/
             packages/api/public/sbom.cdx.json
+            image.tar
           if-no-files-found: error
 
   ui-tests:
@@ -274,20 +324,43 @@ jobs:
       DT_COMPONENT: site
     steps:
       - uses: actions/checkout@v6
-      - name: Install dependencies
-        uses: ./operations/pipelines/install-deps
 
-      - name: Build CycloneDX SBOM
+      # Pull in the image tar that `build` produced and `docker load` it.
+      # Scanning the same artefact downstream consumers will push and run
+      # means the PR DT scan sees exactly what would deploy in prod.
+      - name: Download build artifact
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.2.1
+        uses: actions/download-artifact@v8
         with:
-          app-language: node
-          app-manifest-path: .
+          name: build-${{ github.run_id }}
+          path: build-artifact
+
+      - name: Load runtime image
+        if: env.DT_HOST != '' && env.DT_API_KEY != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker load -i build-artifact/image.tar
+
+      - name: Build CycloneDX SBOM (image + workflows)
+        if: env.DT_HOST != '' && env.DT_API_KEY != ''
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.3.0
+        with:
+          image: ${{ needs.build.outputs.image-tag }}
+          scan-github-actions-path: .github/workflows
           output-path: packages/api/public/sbom.cdx.json
+
+      - name: Upload PR SBOM artefact (debug)
+        if: always() && env.DT_HOST != '' && env.DT_API_KEY != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-sbom
+          path: packages/api/public/sbom.cdx.json
+          if-no-files-found: warn
 
       - name: Upload SBOM to Dependency-Track (channel=pr)
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.2.1
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.3.0
         with:
           bom-path: packages/api/public/sbom.cdx.json
           upload-artifact: 'false'
@@ -308,7 +381,7 @@ jobs:
 
       - name: DT findings + PR gate
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/step/dt-findings-pr-gate@v2.2.1
+        uses: hoobio/pipeline-tools/pipeline/github/step/dt-findings-pr-gate@v2.3.0
         with:
           server-url: https://${{ env.DT_HOST }}
           api-key: ${{ env.DT_API_KEY }}
@@ -355,7 +428,7 @@ jobs:
       # fire. The App token is unaffected.
       - name: Run release-please with App token
         id: rp
-        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v2.2.1
+        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v2.3.0
         with:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
           app-private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
@@ -428,9 +501,6 @@ jobs:
             echo "ref=${IMG}:${VER}"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v4
-
       - name: Login to GHCR
         uses: docker/login-action@v4
         with:
@@ -438,16 +508,40 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push container image
-        id: push
-        uses: docker/build-push-action@v6
+      # The image was built once in the `build` job and uploaded as part
+      # of build-${{ github.run_id }}. Retag the loaded image with the
+      # release tags and push - no second `docker build` for the run.
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
         with:
-          context: .
-          file: packages/api/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          provenance: true
-          sbom: true
+          name: build-${{ github.run_id }}
+          path: build-artifact
+
+      - name: Load runtime image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker load -i build-artifact/image.tar
+
+      - name: Retag and push image
+        id: push
+        shell: bash
+        env:
+          BUILT_TAG: ${{ needs.build.outputs.image-tag }}
+          IMG: ${{ steps.meta.outputs.image }}
+          VER: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          docker tag "$BUILT_TAG" "${IMG}:${VER}"
+          docker tag "$BUILT_TAG" "${IMG}:latest"
+          docker push "${IMG}:${VER}"
+          docker push "${IMG}:latest"
+          # Re-pull by tag to capture the registry digest (the `inspect`
+          # form would also work, but pull is the same shape docker/login
+          # already needs in the cache).
+          docker pull --quiet "${IMG}:${VER}" >/dev/null
+          DIGEST=$(docker inspect --format '{{ index .RepoDigests 0 }}' "${IMG}:${VER}" | awk -F'@' '{print $2}')
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
       - name: Attest image provenance
         uses: actions/attest-build-provenance@v4
@@ -464,6 +558,7 @@ jobs:
     environment: azure
     outputs:
       findings-url: ${{ steps.findings.outputs.blob-url }}
+      sbom-url: ${{ steps.sbom-blob.outputs.latest-url }}
       storage-account: ${{ steps.storage.outputs.name }}
     env:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -480,12 +575,16 @@ jobs:
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
 
-      - name: Build CycloneDX SBOM via pipeline-tools (image + app)
-        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.2.1
+      # Image scan covers prod npm (via syft's image catalogers reading
+      # the published image's node_modules) plus the alpine OS layer. We
+      # explicitly do NOT pass app-language=node here because that would
+      # walk the source pnpm-lock.yaml and re-add the dev deps the runtime
+      # image was deployed without.
+      - name: Build CycloneDX SBOM via pipeline-tools (image + workflows)
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.3.0
         with:
           image: ${{ needs.build-and-publish.outputs.image-ref }}
-          app-language: node
-          app-manifest-path: .
+          scan-github-actions-path: .github/workflows
           output-path: packages/api/public/sbom.cdx.json
 
       - name: Upload SBOM artifact (for release attachment + downstream jobs)
@@ -525,6 +624,7 @@ jobs:
           fi
 
       - name: Upload SBOM to Azure Blob (public-read)
+        id: sbom-blob
         if: steps.storage.outputs.name != ''
         env:
           VERSION: ${{ needs.build-and-publish.outputs.version }}
@@ -544,10 +644,14 @@ jobs:
             --file packages/api/public/sbom.cdx.json \
             --content-type application/vnd.cyclonedx+json \
             --overwrite --auth-mode login
+          # Expose the latest blob URL so the deploy step can plumb it
+          # into the Container App as SBOM_URL.
+          LATEST_URL="https://${STORAGE}.blob.core.windows.net/sbom/latest/sbom.cdx.json"
+          echo "latest-url=${LATEST_URL}" >> "$GITHUB_OUTPUT"
 
       - name: Upload SBOM to Dependency-Track
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.2.1
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.3.0
         with:
           bom-path: packages/api/public/sbom.cdx.json
           upload-artifact: 'false'
@@ -649,6 +753,7 @@ jobs:
           container-image: ${{ needs.build-and-publish.outputs.image-ref }}
           app-version: ${{ needs.build-and-publish.outputs.version }}
           findings-url: ${{ needs.generate-sbom.outputs.findings-url || '' }}
+          sbom-url: ${{ needs.generate-sbom.outputs.sbom-url || '' }}
 
   pdt-prod:
     name: PDT (Production)

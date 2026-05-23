@@ -21,6 +21,10 @@ inputs:
     description: Public Azure Blob URL where the SBOM findings.json lives
     required: false
     default: ''
+  sbom-url:
+    description: Public Azure Blob URL where the latest CycloneDX SBOM lives
+    required: false
+    default: ''
 
 outputs:
   fqdn:
@@ -42,6 +46,7 @@ runs:
         CONTAINER_IMAGE: ${{ inputs.container-image }}
         APP_VERSION: ${{ inputs.app-version }}
         FINDINGS_URL: ${{ inputs.findings-url }}
+        SBOM_URL: ${{ inputs.sbom-url }}
       run: |
         set -euo pipefail
 
@@ -53,6 +58,7 @@ runs:
           --parameters "containerImage=$CONTAINER_IMAGE" \
           --parameters "appVersion=$APP_VERSION" \
           --parameters "findingsUrl=$FINDINGS_URL" \
+          --parameters "sbomUrl=$SBOM_URL" \
           --query 'properties.outputs' \
           -o json | tee deployment-outputs.json
 
@@ -69,4 +75,5 @@ runs:
           echo "- Site: https://$FQDN"
           echo "- Storage: $STORAGE"
           if [ -n "$FINDINGS_URL" ]; then echo "- Findings URL: $FINDINGS_URL"; fi
+          if [ -n "$SBOM_URL" ]; then echo "- SBOM URL: $SBOM_URL"; fi
         } >> "$GITHUB_STEP_SUMMARY"

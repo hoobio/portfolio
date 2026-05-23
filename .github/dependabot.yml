@@ -40,9 +40,8 @@ updates:
       - dependencies
       - docker
 
-  # Bun workspace (npm-compatible). Dependabot reads package.json directly;
-  # the bun.lock text format isn't fully understood yet, so PRs target the
-  # manifests and rely on `bun install --frozen-lockfile` in CI to regenerate.
+  # pnpm workspace. Dependabot reads pnpm-lock.yaml directly for the npm
+  # ecosystem and proposes updates against the manifest files.
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -68,7 +67,3 @@ updates:
         update-types:
           - minor
           - patch
-    ignore:
-      # Pin the bun runtime via the engines field; the package.json devDep
-      # lock isn't where we manage it.
-      - dependency-name: "bun"
