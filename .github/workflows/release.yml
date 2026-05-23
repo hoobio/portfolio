@@ -245,12 +245,12 @@ jobs:
           domain: ${{ env.DT_DOMAIN }}
           system: ${{ env.DT_SYSTEM }}
           component: ${{ env.DT_COMPONENT }}
-          channel: ${{ needs.release-please.outputs.release_created == 'true' && 'release' || 'main' }}
+          channel: ${{ (needs.release-please.outputs.release_created == 'true' || inputs.publish_release == true) && 'release' || 'main' }}
           default-branch: main
           project-version: ${{ needs.build-and-publish.outputs.version }}
           project-tags: repo=${{ github.repository }},commit=${{ github.sha }},run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          mark-latest: ${{ needs.release-please.outputs.release_created == 'true' }}
-          prune-stale-children: ${{ needs.release-please.outputs.release_created != 'true' }}
+          mark-latest: ${{ needs.release-please.outputs.release_created == 'true' || inputs.publish_release == true }}
+          prune-stale-children: ${{ needs.release-please.outputs.release_created != 'true' && inputs.publish_release != true }}
           keep: '10'
           ci-keep: '3'
 
