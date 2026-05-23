@@ -8,7 +8,7 @@
 ARG RUNTIME_IMAGE=dhi.io/node:24
 
 # ----- build stages on plain node:24-alpine (need apk + corepack) -----
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@11.2.2 --activate
 # CI=true tells pnpm to error rather than prompt when its pre-run
 # deps-status check decides node_modules needs refreshing. Without it,
