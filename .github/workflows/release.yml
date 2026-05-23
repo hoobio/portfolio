@@ -31,14 +31,26 @@ jobs:
     outputs:
       release_created: ${{ steps.rp.outputs.release_created }}
       tag_name: ${{ steps.rp.outputs.tag_name }}
-      version: ${{ steps.rp.outputs.version }}
+      version: ${{ steps.version.outputs.value }}
     steps:
+      # Use a GitHub App token so the release PR is authored by the App, not
+      # github-actions[bot]. PRs created by the default GITHUB_TOKEN do not
+      # trigger downstream workflow runs (anti-recursion safeguard), which
+      # leaves required checks unsatisfied. The App token is unaffected.
       - id: rp
-        uses: googleapis/release-please-action@v4
+        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v1.6.0
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
+          app-private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      # The wrapper step exposes tag_name but not version; strip the leading v.
+      - id: version
+        shell: bash
+        run: |
+          tag="${{ steps.rp.outputs.tag_name }}"
+          echo "value=${tag#v}" >> "$GITHUB_OUTPUT"
 
   build-image:
     name: Build + push container
