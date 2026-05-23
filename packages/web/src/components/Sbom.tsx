@@ -196,28 +196,141 @@ export function Sbom({ embedded = false }: { embedded?: boolean } = {}) {
 
 function SbomHeader({ sbom }: { sbom: SbomSummary }) {
   return (
-    <div className="rounded-lg border border-bg-elev-2 bg-bg-elev p-4 font-mono text-sm flex flex-wrap items-baseline justify-between gap-3">
-      <div>
-        <span className="text-text-mute"># </span>
-        <span className="text-accent-blue">{sbom.bomFormat}</span>
-        <span className="text-text-mute"> · spec </span>
-        <span className="text-accent-cyan">{sbom.specVersion}</span>
-        {sbom.generatedAt ? (
-          <>
-            <span className="text-text-mute"> · generated </span>
-            <span className="text-text-dim">{sbom.generatedAt.split('T')[0]}</span>
-          </>
-        ) : null}
+    <div className="rounded-lg border border-bg-elev-2 bg-bg-elev p-4 font-mono text-sm space-y-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <div>
+          <span className="text-text-mute"># </span>
+          <span className="text-accent-blue">{sbom.bomFormat}</span>
+          <span className="text-text-mute"> · spec </span>
+          <span className="text-accent-cyan">{sbom.specVersion}</span>
+          {sbom.generatedAt ? (
+            <>
+              <span className="text-text-mute"> · generated </span>
+              <span className="text-text-dim">{sbom.generatedAt.split('T')[0]}</span>
+            </>
+          ) : null}
+        </div>
+        <div className="text-text-dim text-xs">
+          <a href="/api/sbom/raw" target="_blank" rel="noreferrer" className="mr-3">
+            raw .cdx.json
+          </a>
+          <a href="/api/sbom" target="_blank" rel="noreferrer">
+            parsed JSON
+          </a>
+        </div>
       </div>
-      <div className="text-text-dim text-xs">
-        <a href="/api/sbom/raw" target="_blank" rel="noreferrer" className="mr-3">
-          raw .cdx.json
-        </a>
-        <a href="/api/sbom" target="_blank" rel="noreferrer">
-          parsed JSON
-        </a>
-      </div>
+      <BuildBadges />
     </div>
+  );
+}
+
+interface BadgeState {
+  ci: 'success' | 'failure' | 'in_progress' | 'unknown';
+  release: string | null;
+  lastCommit: string | null;
+}
+
+const GITHUB_REPO = 'hoobio/portfolio';
+
+function BuildBadges() {
+  const [state, setState] = useState<BadgeState>({
+    ci: 'unknown',
+    release: null,
+    lastCommit: null,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.allSettled([
+      fetch(
+        `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/ci.yml/runs?branch=main&per_page=1`,
+      ).then((r) => r.json()),
+      fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`).then((r) => r.json()),
+      fetch(`https://api.github.com/repos/${GITHUB_REPO}/commits/main`).then((r) => r.json()),
+    ]).then(([ciRes, relRes, commitRes]) => {
+      if (cancelled) return;
+      const ciRun =
+        ciRes.status === 'fulfilled' ? ciRes.value?.workflow_runs?.[0] : undefined;
+      const ci: BadgeState['ci'] =
+        ciRun?.status === 'in_progress' || ciRun?.status === 'queued'
+          ? 'in_progress'
+          : ciRun?.conclusion === 'success'
+            ? 'success'
+            : ciRun?.conclusion === 'failure'
+              ? 'failure'
+              : 'unknown';
+      const release =
+        relRes.status === 'fulfilled' && typeof relRes.value?.tag_name === 'string'
+          ? relRes.value.tag_name
+          : null;
+      const lastCommit =
+        commitRes.status === 'fulfilled' && commitRes.value?.commit?.author?.date
+          ? String(commitRes.value.commit.author.date).split('T')[0] ?? null
+          : null;
+      setState({ ci, release, lastCommit });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const ciLabel = state.ci === 'in_progress' ? 'running' : state.ci === 'unknown' ? '...' : state.ci === 'success' ? 'passing' : 'failing';
+  const ciTone =
+    state.ci === 'success'
+      ? 'green'
+      : state.ci === 'failure'
+        ? 'red'
+        : state.ci === 'in_progress'
+          ? 'yellow'
+          : 'mute';
+
+  return (
+    <div className="flex flex-wrap gap-1.5 pt-1">
+      <Badge label="ci" value={ciLabel} tone={ciTone} href={`https://github.com/${GITHUB_REPO}/actions/workflows/ci.yml`} />
+      <Badge label="release" value={state.release ?? '...'} tone="blue" href={`https://github.com/${GITHUB_REPO}/releases/latest`} />
+      <Badge label="license" value="MIT" tone="cyan" href={`https://github.com/${GITHUB_REPO}/blob/main/LICENSE`} />
+      <Badge label="sbom" value="cyclonedx" tone="purple" href="/api/sbom" />
+      <Badge label="last commit" value={state.lastCommit ?? '...'} tone="mute" href={`https://github.com/${GITHUB_REPO}/commits/main`} />
+    </div>
+  );
+}
+
+const BADGE_TONE: Record<string, string> = {
+  green: 'bg-accent-green/15 text-accent-green border-accent-green/40',
+  red: 'bg-accent-red/15 text-accent-red border-accent-red/40',
+  yellow: 'bg-accent-yellow/15 text-accent-yellow border-accent-yellow/40',
+  blue: 'bg-accent-blue/15 text-accent-blue border-accent-blue/40',
+  cyan: 'bg-accent-cyan/15 text-accent-cyan border-accent-cyan/40',
+  purple: 'bg-accent-purple/15 text-accent-purple border-accent-purple/40',
+  mute: 'bg-bg-elev text-text-dim border-bg-elev-2',
+};
+
+function Badge({
+  label,
+  value,
+  tone,
+  href,
+}: {
+  label: string;
+  value: string;
+  tone: string;
+  href: string;
+}) {
+  const external = href.startsWith('http');
+  return (
+    <a
+      href={href}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noreferrer' : undefined}
+      className="inline-flex font-mono text-[10px] uppercase tracking-wider no-underline hover:no-underline"
+    >
+      <span className="bg-bg-elev-2 text-text-mute border border-bg-elev-2 rounded-l-sm px-2 py-1">
+        {label}
+      </span>
+      <span className={clsx('border border-l-0 rounded-r-sm px-2 py-1', BADGE_TONE[tone] ?? BADGE_TONE['mute'])}>
+        {value}
+      </span>
+    </a>
   );
 }
 

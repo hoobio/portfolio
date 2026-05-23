@@ -2,6 +2,12 @@
 
 > Live: **[hoobi.io](https://hoobi.io)**
 
+[![CI](https://img.shields.io/github/actions/workflow/status/hoobio/portfolio/ci.yml?branch=main&label=CI&logo=github-actions)](https://github.com/hoobio/portfolio/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/hoobio/portfolio?label=Release&logo=github&color=181717)](https://github.com/hoobio/portfolio/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![SBOM: CycloneDX](https://img.shields.io/badge/SBOM-CycloneDX-346DDB?logo=cyclonedx&logoColor=white)](https://hoobi.io/api/sbom)
+[![Last Commit](https://img.shields.io/github/last-commit/hoobio/portfolio)](https://github.com/hoobio/portfolio/commits/main)
+
 A living resume. The portfolio data lives in [`data/`](./data) as YAML files and is the source of truth: edit the YAML and the site updates.
 
 - Backend: Fastify + zod + auto-generated OpenAPI / Swagger UI. Serves the SPA on `/` and the API on `/api/*`.
