@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import * as d3 from 'd3';
 import type { SbomSummary } from '@hoobi-portfolio/schemas';
 import { Section } from './Section.js';
+import { TerminalPrompt } from './TerminalPrompt.js';
 import { api } from '../api.js';
 
 interface EcosystemBucket {
@@ -135,7 +136,8 @@ export function Sbom({ embedded = false }: { embedded?: boolean } = {}) {
       <p className="text-accent-red font-mono">No SBOM available: {error}</p>
     ) : !sbom ? (
       <p className="text-text-dim font-mono">
-        <span className="prompt">loading sbom</span>
+        <TerminalPrompt />
+        <span className="text-text">loading sbom</span>
         <span className="blink">_</span>
       </p>
     ) : null;

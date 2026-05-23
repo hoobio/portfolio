@@ -5,6 +5,7 @@ import { api } from './api.js';
 import { buildPersonJsonLd, injectJsonLd } from './lib/jsonld.js';
 import { Nav } from './components/Nav.js';
 import { Footer } from './components/Footer.js';
+import { TerminalPrompt } from './components/TerminalPrompt.js';
 import { HomePage } from './pages/Home.js';
 import { SbomPage } from './pages/Sbom.js';
 
@@ -44,7 +45,8 @@ export function App() {
   if (!portfolio) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 font-mono text-text-dim">
-        <span className="prompt">loading portfolio</span>
+        <TerminalPrompt />
+        <span className="text-text">loading portfolio</span>
         <span className="blink">_</span>
       </div>
     );

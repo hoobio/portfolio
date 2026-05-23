@@ -96,6 +96,16 @@ export function HomePage({ portfolio }: { portfolio: Portfolio }) {
     rail.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
   }, [location.hash]);
 
+  // Broadcast the active section so the Nav can show a current-page
+  // indicator. Bypasses react-router because we'd otherwise race the
+  // hash-driven scroll effect above (writing back to the hash would
+  // re-fire that effect mid-scroll).
+  useEffect(() => {
+    document.dispatchEvent(
+      new CustomEvent('home:active-section', { detail: { id: PAGES[activeIndex] } }),
+    );
+  }, [activeIndex]);
+
   // Track which page is most visible (drives the opacity). We intentionally
   // do NOT write back to the URL hash here: doing that mid-scroll races
   // hash-driven scrollIntoView calls (the previous bug where Nav clicks

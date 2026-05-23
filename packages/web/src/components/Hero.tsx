@@ -1,31 +1,30 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Profile } from '@hoobi-portfolio/schemas';
+import { TerminalPrompt } from './TerminalPrompt.js';
 
 interface HeroProps {
   profile: Profile;
 }
 
-interface Line {
-  text: string;
-  cls: string;
-  /** When true, types out one character at a time. */
-  typed?: boolean;
-}
+type Line =
+  | { kind: 'command'; text: string }
+  | { kind: 'output'; text: string; cls: string }
+  | { kind: 'blank' };
 
 function makeLines(profile: Profile): Line[] {
   return [
-    { text: '$ whoami', cls: 'text-accent-red', typed: true },
-    { text: profile.name, cls: 'text-text' },
-    { text: '', cls: '' },
-    { text: '$ cat ./role', cls: 'text-accent-red', typed: true },
-    { text: profile.role, cls: 'text-accent-blue' },
-    { text: profile.location, cls: 'text-text-dim' },
-    { text: '', cls: '' },
-    { text: '$ cat ./headline', cls: 'text-accent-red', typed: true },
-    { text: profile.headline, cls: 'text-accent-cyan' },
-    { text: '', cls: '' },
-    { text: '$ cat ./availability', cls: 'text-accent-red', typed: true },
-    { text: profile.availability.description, cls: 'text-accent-yellow' },
+    { kind: 'command', text: 'whoami' },
+    { kind: 'output', text: profile.name, cls: 'text-accent-purple' },
+    { kind: 'blank' },
+    { kind: 'command', text: 'cat ./role' },
+    { kind: 'output', text: profile.role, cls: 'text-accent-blue' },
+    { kind: 'output', text: profile.location, cls: 'text-text-dim' },
+    { kind: 'blank' },
+    { kind: 'command', text: 'cat ./headline' },
+    { kind: 'output', text: profile.headline, cls: 'text-accent-cyan' },
+    { kind: 'blank' },
+    { kind: 'command', text: 'cat ./availability' },
+    { kind: 'output', text: profile.availability.description, cls: 'text-accent-yellow' },
   ];
 }
 
@@ -38,14 +37,15 @@ export function Hero({ profile }: HeroProps) {
   const [typedChars, setTypedChars] = useState(0);
   const done = index >= lines.length;
   const currentLine = lines[index];
-  const isTypingCurrent = !done && Boolean(currentLine?.typed) && typedChars < (currentLine?.text.length ?? 0);
+  const isTypingCommand =
+    !done && currentLine?.kind === 'command' && typedChars < currentLine.text.length;
 
   useEffect(() => {
     if (done) return;
     const line = lines[index];
     if (!line) return;
 
-    if (line.typed) {
+    if (line.kind === 'command') {
       if (typedChars < line.text.length) {
         const t = window.setTimeout(() => setTypedChars((c) => c + 1), TYPE_INTERVAL_MS);
         return () => window.clearTimeout(t);
@@ -57,7 +57,6 @@ export function Hero({ profile }: HeroProps) {
       return () => window.clearTimeout(t);
     }
 
-    // Non-typed lines: reveal whole-line after a short beat.
     const t = window.setTimeout(() => setIndex((i) => i + 1), POST_LINE_PAUSE_MS);
     return () => window.clearTimeout(t);
   }, [index, typedChars, done, lines]);
@@ -65,31 +64,30 @@ export function Hero({ profile }: HeroProps) {
   return (
     <section id="top" className="pt-8 md:pt-12">
       <div className="rounded-md border border-bg-elev-2 bg-bg-elev overflow-hidden">
-        <WindowsTerminalChrome title="PowerShell" />
+        <WindowsTerminalChrome title="shell" />
         <div className="p-6 md:p-8 font-mono text-sm md:text-base leading-relaxed min-h-[32.5rem]">
           <PromptHeader profile={profile} />
           {lines.slice(0, index).map((line, idx) => (
-            <div key={idx} className={line.cls || 'text-text'}>
-              {line.text === '' ? ' ' : line.text}
-            </div>
+            <LineRow key={idx} line={line} />
           ))}
-          {!done && currentLine?.typed ? (
-            <div className={currentLine.cls}>
-              {currentLine.text.slice(0, typedChars)}
+          {!done && currentLine?.kind === 'command' ? (
+            <div>
+              <TerminalPrompt />
+              <span className="text-text">{currentLine.text.slice(0, typedChars)}</span>
               <span aria-hidden className="text-text blink">
                 ▌
               </span>
             </div>
           ) : null}
           {done ? (
-            <div className="mt-2 text-accent-red">
-              ${' '}
+            <div className="mt-2">
+              <TerminalPrompt />
               <span aria-hidden className="blink text-text">
                 ▌
               </span>
             </div>
           ) : null}
-          {!done && !isTypingCurrent && currentLine && !currentLine.typed ? (
+          {!done && !isTypingCommand && currentLine && currentLine.kind !== 'command' ? (
             <span aria-hidden className="text-accent-blue blink">
               ▌
             </span>
@@ -117,6 +115,19 @@ export function Hero({ profile }: HeroProps) {
       </div>
     </section>
   );
+}
+
+function LineRow({ line }: { line: Line }) {
+  if (line.kind === 'blank') return <div>&nbsp;</div>;
+  if (line.kind === 'command') {
+    return (
+      <div>
+        <TerminalPrompt />
+        <span className="text-text">{line.text}</span>
+      </div>
+    );
+  }
+  return <div className={line.cls}>{line.text}</div>;
 }
 
 function WindowsTerminalChrome({ title }: { title: string }) {
@@ -250,14 +261,9 @@ function PowerShellIcon() {
 function PromptHeader({ profile }: { profile: Profile }) {
   return (
     <div className="mb-3 text-text-dim text-xs md:text-sm">
-      <div>
-        <span className="text-text">PowerShell 7.6.1</span>
-      </div>
-      <div>
-        <span className="text-accent-red">Hoobi</span>
-        <span className="text-text-mute">@</span>
-        <span className="text-text-dim">{profile.location.toUpperCase().split(',')[0]}</span>
-      </div>
+      <span className="text-accent-red">Hoobi</span>
+      <span className="text-text-mute">@</span>
+      <span className="text-text-dim">{profile.location.toUpperCase().split(',')[0]}</span>
     </div>
   );
 }
@@ -274,18 +280,29 @@ function ContactCard({ label, items }: { label: string; items: ContactItem[] }) 
     <div className="rounded-md border border-bg-elev-2 bg-bg-elev p-4">
       <div className="text-text-mute"># {label}</div>
       <ul className="mt-1">
-        {items.map((item, idx) => (
-          <li key={idx} className="text-text">
-            {item.value ? (
-              <a href={item.value} target="_blank" rel="noreferrer">
-                {item.display}
-              </a>
-            ) : (
-              item.display
-            )}
-          </li>
-        ))}
+        {items.map((item, idx) => {
+          const href = hrefFor(item);
+          return (
+            <li key={idx} className="text-text">
+              {href ? (
+                <a href={href} target={item.kind === 'email' ? undefined : '_blank'} rel="noreferrer">
+                  {item.display}
+                </a>
+              ) : (
+                item.display
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
+}
+
+function hrefFor(item: ContactItem): string | null {
+  if (!item.value) return null;
+  if (item.kind === 'email') {
+    return item.value.startsWith('mailto:') ? item.value : `mailto:${item.value}`;
+  }
+  return item.value;
 }

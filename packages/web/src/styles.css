@@ -96,10 +96,6 @@
 
 /* Custom utility helpers */
 @layer utilities {
-  .prompt::before {
-    content: '$ ';
-    color: var(--color-accent-red);
-  }
   .comment {
     color: var(--color-text-mute);
   }
