@@ -32,12 +32,12 @@ export function Nav() {
   const location = useLocation();
   const onHome = location.pathname === '/';
   return (
-    <header className="sticky top-0 z-20 border-b border-bg-elev-2 bg-bg">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3 font-mono text-sm">
-        <Link to="/" className="text-accent-blue hover:no-underline">
+    <header className="site-nav sticky top-0 z-20 border-b border-bg-elev-2 bg-bg">
+      <div className="site-nav-inner mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3 font-mono text-sm">
+        <Link to="/" className="site-nav-brand text-accent-blue hover:no-underline">
           <span className="text-accent-red">~</span>/<span className="text-accent-cyan">alex</span>
         </Link>
-        <nav className="hidden md:flex gap-4">
+        <nav className="site-nav-links hidden md:flex gap-4">
           {homeSections.map((s) => (
             <a
               key={s.id}

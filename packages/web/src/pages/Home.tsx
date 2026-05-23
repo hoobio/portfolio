@@ -23,10 +23,61 @@ const PAGES = [
 ] as const;
 type PageId = (typeof PAGES)[number];
 
+// Selectors for elements that should keep their native click / selection
+// behaviour. If a pointerdown lands inside any of these, we DON'T start a
+// drag-scroll - so text stays selectable and links/buttons stay clickable.
+const NO_DRAG_SELECTOR =
+  'a, button, input, textarea, select, [contenteditable], [data-no-drag], ' +
+  'p, h1, h2, h3, h4, h5, h6, span, li, td, th, code, pre, label, time, ' +
+  'dt, dd, blockquote, q, em, strong';
+
 export function HomePage({ portfolio }: { portfolio: Portfolio }) {
   const railRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
   const [activeIndex, setActiveIndex] = useState(0);
+
+  // Drag-to-scroll on whitespace. Mouse only (touch already pans natively).
+  // Bails if the pointer lands on text or any interactive element, so
+  // copy/paste and clicks are preserved.
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || e.pointerType !== 'mouse') return;
+    const target = e.target as HTMLElement;
+    if (target.closest(NO_DRAG_SELECTOR)) return;
+
+    const page = target.closest<HTMLElement>('.home-page');
+    const rail = railRef.current;
+    if (!page || !rail) return;
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startScrollTop = page.scrollTop;
+    const startScrollLeft = rail.scrollLeft;
+    let active = false;
+
+    const move = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      if (!active && Math.hypot(dx, dy) < 5) return;
+      if (!active) {
+        active = true;
+        document.body.style.cursor = 'grabbing';
+        document.body.style.userSelect = 'none';
+      }
+      page.scrollTop = startScrollTop - dy;
+      rail.scrollLeft = startScrollLeft - dx;
+    };
+
+    const up = () => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      if (active) window.getSelection()?.removeAllRanges();
+    };
+
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  };
 
   // Scroll to the section matching the hash on load and when the hash changes.
   // Same pattern as the Nav click handler: only touch the horizontal rail,
@@ -84,7 +135,10 @@ export function HomePage({ portfolio }: { portfolio: Portfolio }) {
   };
 
   return (
-    <div className="-mx-6 relative">
+    <div
+      className="home-deck -mx-6 relative flex-1 min-h-0 flex flex-col"
+      onPointerDown={onPointerDown}
+    >
       <ArrowButton
         direction="left"
         disabled={activeIndex === 0}
@@ -97,7 +151,7 @@ export function HomePage({ portfolio }: { portfolio: Portfolio }) {
       />
       <div
         ref={railRef}
-        className="relative flex overflow-x-auto snap-x snap-mandatory scroll-smooth [scrollbar-width:thin]"
+        className="home-rail relative flex-1 min-h-0 flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
       >
         <Page id="top" index={0} activeIndex={activeIndex}>
           <Hero profile={portfolio.profile} />
@@ -143,9 +197,12 @@ function Page({ id, index, activeIndex, children }: PageProps) {
       id={id}
       data-page={id}
       className={clsx(
-        'snap-center shrink-0 w-full px-6 transition-opacity duration-300 overflow-y-auto',
-        // nav (~3.25rem) + footer (~3rem) + safety buffer
-        'min-h-[calc(100dvh-7rem)]',
+        'home-page',
+        active && 'home-page-active',
+        // h-full fills the rail (sized by flex-1 between nav and footer);
+        // overflow-y-auto + styled-scrollbar so tall sections scroll within
+        // themselves and the user can see there's more below.
+        'snap-center shrink-0 w-full h-full px-6 transition-opacity duration-300 overflow-y-auto styled-scrollbar',
         active ? 'opacity-100' : 'opacity-30 hover:opacity-60',
       )}
     >
@@ -169,6 +226,8 @@ function ArrowButton({ direction, disabled, onClick }: ArrowButtonProps) {
       disabled={disabled}
       aria-label={isLeft ? 'Previous page' : 'Next page'}
       className={clsx(
+        'home-arrow',
+        isLeft ? 'home-arrow-left' : 'home-arrow-right',
         'hidden md:flex fixed top-1/2 -translate-y-1/2 z-30 size-10 items-center justify-center rounded-full border border-bg-elev-2 bg-bg-elev text-text-dim transition-all',
         isLeft ? 'left-4' : 'right-4',
         disabled
@@ -189,11 +248,12 @@ function ArrowButton({ direction, disabled, onClick }: ArrowButtonProps) {
 
 function PageDots({ activeIndex }: { activeIndex: number }) {
   return (
-    <div className="sticky bottom-4 mt-4 flex justify-center gap-2 font-mono text-xs text-text-mute pointer-events-none">
+    <div className="home-page-dots shrink-0 py-3 flex justify-center gap-2 font-mono text-xs text-text-mute pointer-events-none">
       {PAGES.map((id, i) => (
         <a
           key={id}
           href={`#${id}`}
+          data-page-dot={id}
           onClick={(e) => {
             const el = document.getElementById(id);
             if (el) {
@@ -206,7 +266,8 @@ function PageDots({ activeIndex }: { activeIndex: number }) {
             }
           }}
           className={clsx(
-            'pointer-events-auto rounded-full size-2 transition-colors',
+            'home-page-dot pointer-events-auto rounded-full size-2 transition-colors',
+            i === activeIndex && 'home-page-dot-active',
             i === activeIndex ? 'bg-accent-blue' : 'bg-bg-elev-2 hover:bg-text-dim',
           )}
           aria-label={`Go to ${id}`}

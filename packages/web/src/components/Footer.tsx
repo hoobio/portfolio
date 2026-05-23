@@ -7,8 +7,8 @@ interface FooterProps {
 
 export function Footer({ profile, generatedAt }: FooterProps) {
   return (
-    <footer className="border-t border-bg-elev-2 mt-12">
-      <div className="mx-auto max-w-5xl px-6 py-6 font-mono text-xs text-text-mute flex flex-wrap items-center justify-between gap-2">
+    <footer className="site-footer border-t border-bg-elev-2">
+      <div className="site-footer-inner mx-auto max-w-5xl px-6 py-4 font-mono text-xs text-text-mute flex flex-wrap items-center justify-between gap-2">
         <div>
           <span className="text-accent-red">$</span>{' '}
           <span className="text-text-dim">echo</span>{' '}

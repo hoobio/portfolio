@@ -51,9 +51,9 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div id="app" className="site-shell h-dvh flex flex-col overflow-hidden">
       <Nav />
-      <main className="flex-1 mx-auto max-w-6xl w-full px-6 pb-8">
+      <main className="site-main flex-1 min-h-0 mx-auto max-w-6xl w-full px-6 flex flex-col">
         <Routes>
           <Route path="/" element={<HomePage portfolio={portfolio} />} />
           <Route path="/sbom" element={<SbomPage />} />
