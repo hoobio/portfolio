@@ -38,6 +38,13 @@ RUN pnpm --filter @hoobi-portfolio/api deploy --prod /tmp/api-deploy
 # minimal + daily-rebuilt and skips the npm bundle, which keeps the SBOM
 # scan focused on what we actually ship.
 FROM ${RUNTIME_IMAGE} AS runtime
+# Drop the npm bundle the upstream node:24-alpine ships at
+# /usr/local/lib/node_modules/npm. We use pnpm at build time and run
+# the bundled esbuild output at runtime, so npm is dead weight. Its
+# vendored dependencies (ip-address, brace-expansion 5.0.5, etc.) also
+# generate noise in the SBOM scan. The `|| true` keeps this harmless
+# on a Docker Hardened Image that already ships without npm.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx 2>/dev/null || true
 ENV NODE_ENV=production
 ENV PORT=8090
 ENV HOST=0.0.0.0
