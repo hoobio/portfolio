@@ -16,9 +16,14 @@ updates:
       - dependencies
       - github-actions
     groups:
-      actions:
+      # Group minor/patch only; majors stay individual so each can be
+      # vetted (breaking-change risk on major version bumps).
+      actions-minor-patch:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
 
   # API container base image
   - package-ecosystem: docker
