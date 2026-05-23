@@ -208,8 +208,10 @@ jobs:
           project-version: pr-${{ github.event.pull_request.number }}
           fail-on-severity: critical
           pr-number: ${{ github.event.pull_request.number }}
+          repo: ${{ github.repository }}
           github-token: ${{ github.token }}
           html-output-path: dt-findings.html
+          artifact-run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Upload HTML findings report
         if: always() && env.DT_HOST != '' && env.DT_API_KEY != ''
