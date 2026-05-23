@@ -21,9 +21,13 @@ runs:
         mkdir -p packages/api/public/web
         cp -R packages/web/dist/. packages/api/public/web/
 
-    - name: bun run sbom
-      shell: bash
-      run: bun run sbom
+    # syft handles bun.lock text-format natively (cdxgen 12.4.x does not).
+    - uses: anchore/sbom-action@v0
+      with:
+        path: .
+        format: cyclonedx-json
+        output-file: packages/api/public/sbom.cdx.json
+        upload-artifact: false
 
     - name: Build summary
       shell: bash
