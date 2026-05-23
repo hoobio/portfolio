@@ -114,7 +114,19 @@ groups:
     skills:
       - FedRAMP
       - SOC-2
+      - GDPR (data residency, claim-based regional routing)
       - PCI-aware workload patterns
+
+  - id: cloud-cost-optimisation
+    title: Cloud cost optimisation
+    level: working
+    skills:
+      - Azure Reservations (compute + Cosmos throughput)
+      - Azure Compute Savings Plans
+      - AWS Reserved Instances
+      - AWS Compute Savings Plans
+      - Cost analysis + chargeback reporting
+      - Right-sizing + commitment laddering
 
   - id: ai-native-tooling
     title: AI-native engineering

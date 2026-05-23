@@ -82,6 +82,26 @@ projects:
       - GitHub MCP
       - Azure DevOps MCP
 
+  - id: personal-assistant
+    title: Personal Assistant
+    kind: personal
+    role: Author
+    status: active
+    summary: >-
+      Local LLM-driven personal assistant. Wake-word voice activation with
+      on-device STT and TTS, tool-use bridge into Home Assistant for device
+      and scene control, Jellyfin/Jellyseerr integration for media requests
+      and playback control. Rich structured logging across the agent loop.
+    tech:
+      - Local LLM (llama.cpp / Ollama)
+      - Whisper STT
+      - Piper / Coqui TTS
+      - Wake-word detection
+      - Home Assistant
+      - Jellyfin / Jellyseerr
+      - Python
+      - Structured logging
+
   - id: hoobi-automation
     title: Hoobi Automation
     kind: personal
@@ -121,28 +141,29 @@ projects:
     role: Contributor / designer
     status: shipped
     summary: >-
-      A closed-sourcee automation solution inside the that drives PIM role
-      assignments via IaC. Audited, repeatable,
-      PR-gated. Rolled out across multiple product platforms.
+      A closed-source automation solution that drives PIM role assignments
+      via IaC. Audited, repeatable, PR-gated. Rolled out across multiple
+      product platforms.
     tech:
       - Terraform
       - Azure RBAC
       - PIM
       - Azure DevOps pipelines
 
-  - id: cloudflare-edge-poc
+  - id: cloudflare-edge
     title: Cloudflare WAF + Global Load Balancing
     kind: work
     role: Author
     status: shipped
     summary: >-
-      Cloudflare's WAF and global load balancing
-      as a supplement (and possible alternative) to the incumbent edge stack.
-      IAC for top-level domains, configuration, user onboarding with
-      differentiated access levels per domain. Global APIs with claim-based
-      regional routing.
+      Cloudflare WAF and global load balancing supplementing the incumbent
+      edge stack. IaC for top-level domains, configuration, user onboarding
+      with differentiated access levels per domain. Global APIs with
+      claim-based regional routing for GDPR-compliant data residency.
     tech:
       - Cloudflare
       - Terraform
       - Global Load Balancing
       - WAF
+      - GDPR
+      - Claim-based routing

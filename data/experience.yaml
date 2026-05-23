@@ -54,7 +54,7 @@ experience:
       - Privileged Identity Management programme across multiple product platforms, with IaC-based automation driving it.
       - Multi-region resilience groundwork that fed the current DR cutover.
       - "Certificate lifecycle ownership across the company's TLS estate: rotation, automation, expiry detection."
-      - "Cloud cost management: Reserved Instance ownership across the Azure compute and Cosmos footprint."
+      - "Cloud cost optimisation: ownership of Azure Reservations, Compute Savings Plans, and Cosmos throughput reservations across the compute and data footprint."
     tech:
       - Azure
       - Entra ID / PIM
