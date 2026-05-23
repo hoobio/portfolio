@@ -190,7 +190,7 @@ jobs:
           sbom-path: packages/api/public/sbom.cdx.json
 
       - name: Azure login (OIDC)
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           client-id: ${{ env.AZURE_CLIENT_ID }}
@@ -321,7 +321,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Azure login (OIDC)
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
