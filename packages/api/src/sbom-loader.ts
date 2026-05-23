@@ -95,12 +95,32 @@ async function readJson<T>(path: string): Promise<T | undefined> {
   }
 }
 
-export async function loadSbom(path: string): Promise<SbomSummaryType | undefined> {
+async function fetchJson<T>(url: string, timeoutMs = 5_000): Promise<T | undefined> {
+  try {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), timeoutMs);
+    const resp = await fetch(url, { signal: controller.signal });
+    clearTimeout(t);
+    if (!resp.ok) return undefined;
+    return (await resp.json()) as T;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function loadSbom(
+  path: string,
+  findingsUrl?: string,
+): Promise<SbomSummaryType | undefined> {
   const bom = await readJson<CycloneDxBom>(path);
   if (!bom) return undefined;
 
   const sidecarPath = join(dirname(path), 'findings.json');
-  const findings = await readJson<Findings>(sidecarPath);
+  // Prefer remote findings (refreshed every pipeline run) over the
+  // image-baked sidecar. Fall back to the sidecar when no URL is configured.
+  const findings =
+    (findingsUrl ? await fetchJson<Findings>(findingsUrl) : undefined) ??
+    (await readJson<Findings>(sidecarPath));
 
   // Index vulnerabilities by component (purl or name@version) for later merge.
   const vulnsByKey = new Map<string, ComponentVulnerabilityT[]>();

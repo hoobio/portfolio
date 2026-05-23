@@ -14,4 +14,5 @@ export const config = {
   publicDir: process.env['PUBLIC_DIR'] ?? resolve(here, '../public'),
   webDistDir: process.env['WEB_DIST_DIR'] ?? resolve(here, '../public/web'),
   sbomPath: process.env['SBOM_PATH'] ?? resolve(here, '../public/sbom.cdx.json'),
+  findingsUrl: process.env['FINDINGS_URL'] ?? '',
 } as const;

@@ -49,7 +49,7 @@ async function start() {
   });
 
   const { portfolio } = await loadData(config.dataDir);
-  const sbomSummary = await loadSbom(config.sbomPath);
+  const sbomSummary = await loadSbom(config.sbomPath, config.findingsUrl || undefined);
 
   await app.register(fastifySwagger, {
     openapi: {
