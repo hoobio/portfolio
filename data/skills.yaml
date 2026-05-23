@@ -76,6 +76,20 @@ groups:
       - release-please
       - SBOM and provenance attestation gates
 
+  - id: ado-github-administration
+    title: ADO & GitHub platform administration
+    level: deep
+    skills:
+      - Azure DevOps org administration (boards, repos, pipelines, artifacts)
+      - GitHub Enterprise org administration
+      - Billing & licensing (seat management)
+      - Scrum, iterations, area paths, custom work item types
+      - Service connections, agent pools, environments
+      - Branch policies, required reviewers, build validation
+      - GitHub Advanced Security (code/secret scanning, Dependabot)
+      - Audit logging & retention
+      - Cross-org admin across R&D, Corporate IT, Security
+
   - id: data-and-platform-services
     title: Data & platform services
     level: deep
@@ -109,6 +123,17 @@ groups:
       - SOC-2
       - GDPR (data residency, claim-based regional routing)
       - PCI-aware workload patterns
+
+  - id: incident-management
+    title: Incident management
+    level: deep
+    skills:
+      - Security & availability incident response
+      - Customer-facing status page updates
+      - Cross-functional coordination (legal, security, dev teams)
+      - Out-of-hours response & global coordination
+      - Post-incident reviews & corrective actions
+      - Comms tone for regulated & enterprise customers
 
   - id: ai-native-tooling
     title: AI-native engineering
