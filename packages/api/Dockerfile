@@ -8,6 +8,12 @@ COPY packages/web/package.json packages/web/
 RUN bun install --frozen-lockfile
 
 FROM deps AS build
+# syft generates the in-image SBOM (the runtime endpoint /api/sbom serves it).
+# Pinned to the latest stable at the time of writing.
+RUN apk add --no-cache curl bash \
+ && curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
+    | sh -s -- -b /usr/local/bin v1.40.1 \
+ && apk del curl
 COPY . .
 RUN bun run --filter @hoobi-portfolio/web build \
  && bun run --filter @hoobi-portfolio/api build \
