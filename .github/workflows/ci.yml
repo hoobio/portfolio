@@ -45,7 +45,7 @@ jobs:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Run oxlint
@@ -56,7 +56,7 @@ jobs:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Run tsc --noEmit
@@ -70,7 +70,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Run vitest with coverage
@@ -115,7 +115,7 @@ jobs:
 
       - if: always()
         name: Upload coverage artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: coverage-${{ github.run_id }}
           path: packages/*/coverage/
@@ -132,7 +132,7 @@ jobs:
       DHI_USERNAME: ${{ secrets.DHI_USERNAME }}
       DHI_PULL_SECRET: ${{ secrets.DHI_PULL_SECRET }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Build web + api + SBOM
@@ -143,7 +143,7 @@ jobs:
       # build-and-publish retags + pushes it - no second `docker build`
       # anywhere in the run.
       - name: Set up Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
 
       # The runtime stage pulls a Docker Hardened Image (DHI) for node, an
       # auth-gated registry path that ships a minimal, daily-rebuilt base
@@ -152,7 +152,7 @@ jobs:
       # the secrets being present so forks without DHI access can still
       # build against the fallback `RUNTIME_IMAGE` ARG default.
       - name: Login to dhi.io (Docker Hardened Images)
-        uses: docker/login-action@v4
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
         with:
           registry: dhi.io
           username: ${{ secrets.DHI_USERNAME }}
@@ -167,7 +167,7 @@ jobs:
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Build runtime image (output as tar)
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
         with:
           context: .
           file: packages/api/Dockerfile
@@ -182,7 +182,7 @@ jobs:
           outputs: type=docker,dest=image.tar
 
       - name: Upload build artifact (app + image tar)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: build-${{ github.run_id }}
           path: |
@@ -198,11 +198,11 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Download build artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: build-${{ github.run_id }}
           path: build-artifact
@@ -219,11 +219,11 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Download build artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: build-${{ github.run_id }}
           path: build-artifact
@@ -244,14 +244,14 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4
         with:
           languages: javascript-typescript
           build-mode: none
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4
         with:
           category: "/language:javascript-typescript"
 
@@ -331,14 +331,14 @@ jobs:
       DT_SYSTEM: hoobi-portfolio
       DT_COMPONENT: site
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       # Pull in the image tar that `build` produced and `docker load` it.
       # Scanning the same artefact downstream consumers will push and run
       # means the PR DT scan sees exactly what would deploy in prod.
       - name: Download build artifact
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: build-${{ github.run_id }}
           path: build-artifact
@@ -352,7 +352,7 @@ jobs:
 
       - name: Build CycloneDX SBOM (image + workflows)
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.3.0
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@a303c7f7f52fc6d3918b4e2b0212a40fc3ca2074 # v2.3.0
         with:
           image: ${{ needs.build.outputs.image-tag }}
           scan-github-actions-path: .github/workflows
@@ -360,7 +360,7 @@ jobs:
 
       - name: Upload PR SBOM artefact (debug)
         if: always() && env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: pr-sbom
           path: packages/api/public/sbom.cdx.json
@@ -368,7 +368,7 @@ jobs:
 
       - name: Upload SBOM to Dependency-Track (channel=pr)
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.3.0
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@a303c7f7f52fc6d3918b4e2b0212a40fc3ca2074 # v2.3.0
         with:
           bom-path: packages/api/public/sbom.cdx.json
           upload-artifact: 'false'
@@ -389,7 +389,7 @@ jobs:
 
       - name: DT findings + PR gate
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/step/dt-findings-pr-gate@v2.3.0
+        uses: hoobio/pipeline-tools/pipeline/github/step/dt-findings-pr-gate@a303c7f7f52fc6d3918b4e2b0212a40fc3ca2074 # v2.3.0
         with:
           server-url: https://${{ env.DT_HOST }}
           api-key: ${{ env.DT_API_KEY }}
@@ -406,7 +406,7 @@ jobs:
 
       - name: Upload HTML findings report
         if: always() && env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: dt-findings
           path: dt-findings.html
@@ -428,7 +428,7 @@ jobs:
       tag_name: ${{ steps.version.outputs.tag }}
       version: ${{ steps.version.outputs.value }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       # GitHub App token so the release PR is authored by the App, not
       # github-actions[bot]. PRs from the default GITHUB_TOKEN don't trigger
@@ -436,7 +436,7 @@ jobs:
       # fire. The App token is unaffected.
       - name: Run release-please with App token
         id: rp
-        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v2.3.0
+        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@a303c7f7f52fc6d3918b4e2b0212a40fc3ca2074 # v2.3.0
         with:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
           app-private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
@@ -484,7 +484,7 @@ jobs:
       version: ${{ steps.version.outputs.value }}
       digest: ${{ steps.push.outputs.digest }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Resolve image version
         id: version
@@ -510,7 +510,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Login to GHCR
-        uses: docker/login-action@v4
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -520,7 +520,7 @@ jobs:
       # of build-${{ github.run_id }}. Retag the loaded image with the
       # release tags and push - no second `docker build` for the run.
       - name: Download build artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: build-${{ github.run_id }}
           path: build-artifact
@@ -552,7 +552,7 @@ jobs:
           echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
       - name: Attest image provenance
-        uses: actions/attest-build-provenance@v4
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4
         with:
           subject-name: ${{ steps.meta.outputs.image }}
           subject-digest: ${{ steps.push.outputs.digest }}
@@ -579,7 +579,7 @@ jobs:
       DT_SYSTEM: hoobi-portfolio
       DT_COMPONENT: site
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
 
@@ -589,27 +589,27 @@ jobs:
       # walk the source pnpm-lock.yaml and re-add the dev deps the runtime
       # image was deployed without.
       - name: Build CycloneDX SBOM via pipeline-tools (image + workflows)
-        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.3.0
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@a303c7f7f52fc6d3918b4e2b0212a40fc3ca2074 # v2.3.0
         with:
           image: ${{ needs.build-and-publish.outputs.image-ref }}
           scan-github-actions-path: .github/workflows
           output-path: packages/api/public/sbom.cdx.json
 
       - name: Upload SBOM artifact (for release attachment + downstream jobs)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: sbom
           path: packages/api/public/sbom.cdx.json
           if-no-files-found: error
 
       - name: Attest SBOM
-        uses: actions/attest-sbom@v4
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4
         with:
           subject-path: packages/api/public/sbom.cdx.json
           sbom-path: packages/api/public/sbom.cdx.json
 
       - name: Azure login (OIDC)
-        uses: azure/login@v3
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3
         with:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           client-id: ${{ env.AZURE_CLIENT_ID }}
@@ -659,7 +659,7 @@ jobs:
 
       - name: Upload SBOM to Dependency-Track
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.3.0
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@a303c7f7f52fc6d3918b4e2b0212a40fc3ca2074 # v2.3.0
         with:
           bom-path: packages/api/public/sbom.cdx.json
           upload-artifact: 'false'
@@ -697,10 +697,10 @@ jobs:
       inputs.publish_release == true
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Download SBOM
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: sbom
           path: release
@@ -744,9 +744,9 @@ jobs:
       fqdn: ${{ steps.deploy.outputs.fqdn }}
       storage: ${{ steps.deploy.outputs.storage-account }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Azure login (OIDC)
-        uses: azure/login@v3
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3
         with:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -769,7 +769,7 @@ jobs:
     if: always() && needs.deploy.result == 'success' && needs.deploy.outputs.fqdn != ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Install dependencies
         uses: ./operations/pipelines/install-deps
       - name: Run PDT against production
@@ -795,7 +795,7 @@ jobs:
       # authored by the release-please App), so mint an App token here too.
       - name: Mint release-please App token
         id: app-token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
