@@ -25,7 +25,7 @@ runs:
     # javascript-lock-cataloger); scan-github-actions-path adds the actions
     # this repo's workflows reference. No image scan here - that happens
     # post-publish in the generate-sbom job and adds the OS layer for DT.
-    - uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.3.0
+    - uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
       with:
         app-language: node
         app-manifest-path: .

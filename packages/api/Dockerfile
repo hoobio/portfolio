@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7-labs
+# syntax=docker/dockerfile:1.25-labs
 
 # Runtime base. Docker Hardened Image (dhi.io/node:24) by default;
 # overridable via `--build-arg RUNTIME_IMAGE=...` from CI. DHI ships
