@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.6](https://github.com/hoobio/portfolio/compare/v0.1.5...v0.1.6) (2026-07-02)
+
+
+### Bug Fixes
+
+* **deps:** update all non-major dependencies ([#40](https://github.com/hoobio/portfolio/issues/40)) ([b1b30b4](https://github.com/hoobio/portfolio/commit/b1b30b4485d4b9bead3aa7c704e47b8262eee359))
+
+
+### Miscellaneous Chores
+
+* 🔧 add Renovate config ([#33](https://github.com/hoobio/portfolio/issues/33)) ([bf0cc32](https://github.com/hoobio/portfolio/commit/bf0cc320d8629da1fbdbee2b0fd3bfa8c781ccbf))
+* 🔧 retire Dependabot in favour of self-hosted Renovate ([#43](https://github.com/hoobio/portfolio/issues/43)) ([b7fd6db](https://github.com/hoobio/portfolio/commit/b7fd6dba3825c4e62f12657b6e7c8195cae96e69))
+* **deps:** update dependency esbuild to v0.28.1 [security] ([#35](https://github.com/hoobio/portfolio/issues/35)) ([da37ec9](https://github.com/hoobio/portfolio/commit/da37ec90e5d961297173da4c5fdb58979cc47b6b))
+* **deps:** update dependency vite to v8.0.16 [security] ([#36](https://github.com/hoobio/portfolio/issues/36)) ([20be68e](https://github.com/hoobio/portfolio/commit/20be68ec1ae5cdce39b6c82de538b88da6b410a1))
+* **deps:** update dependency vite to v8.1.2 ([#45](https://github.com/hoobio/portfolio/issues/45)) ([981c210](https://github.com/hoobio/portfolio/commit/981c2105e93ca1e00b0ea6a93919756d91d9dc85))
+
+
+### Continuous Integration
+
+* run UI + API tests against the built runtime container ([#19](https://github.com/hoobio/portfolio/issues/19)) ([7beae75](https://github.com/hoobio/portfolio/commit/7beae752f2c092659f69c098208de761eda0fe43))
+
 ## [0.1.5](https://github.com/hoobio/portfolio/compare/v0.1.4...v0.1.5) (2026-05-23)
 
 
