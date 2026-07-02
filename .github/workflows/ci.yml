@@ -352,7 +352,7 @@ jobs:
 
       - name: Build CycloneDX SBOM (image + workflows)
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.3.0
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
         with:
           image: ${{ needs.build.outputs.image-tag }}
           scan-github-actions-path: .github/workflows
@@ -368,7 +368,7 @@ jobs:
 
       - name: Upload SBOM to Dependency-Track (channel=pr)
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.3.0
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
         with:
           bom-path: packages/api/public/sbom.cdx.json
           upload-artifact: 'false'
@@ -389,7 +389,7 @@ jobs:
 
       - name: DT findings + PR gate
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/step/dt-findings-pr-gate@v2.3.0
+        uses: hoobio/pipeline-tools/pipeline/github/step/dt-findings-pr-gate@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
         with:
           server-url: https://${{ env.DT_HOST }}
           api-key: ${{ env.DT_API_KEY }}
@@ -436,7 +436,7 @@ jobs:
       # fire. The App token is unaffected.
       - name: Run release-please with App token
         id: rp
-        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@v2.3.0
+        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
         with:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
           app-private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
@@ -589,7 +589,7 @@ jobs:
       # walk the source pnpm-lock.yaml and re-add the dev deps the runtime
       # image was deployed without.
       - name: Build CycloneDX SBOM via pipeline-tools (image + workflows)
-        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@v2.3.0
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
         with:
           image: ${{ needs.build-and-publish.outputs.image-ref }}
           scan-github-actions-path: .github/workflows
@@ -659,7 +659,7 @@ jobs:
 
       - name: Upload SBOM to Dependency-Track
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@v2.3.0
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
         with:
           bom-path: packages/api/public/sbom.cdx.json
           upload-artifact: 'false'
