@@ -295,14 +295,21 @@ function BuildBadges() {
   );
 }
 
-const BADGE_TONE: Record<string, string> = {
-  green: 'bg-accent-green/15 text-accent-green border-accent-green/40',
-  red: 'bg-accent-red/15 text-accent-red border-accent-red/40',
-  yellow: 'bg-accent-yellow/15 text-accent-yellow border-accent-yellow/40',
-  blue: 'bg-accent-blue/15 text-accent-blue border-accent-blue/40',
-  cyan: 'bg-accent-cyan/15 text-accent-cyan border-accent-cyan/40',
-  purple: 'bg-accent-purple/15 text-accent-purple border-accent-purple/40',
-  mute: 'bg-bg-elev text-text-dim border-bg-elev-2',
+interface BadgeTone {
+  chip: string;
+  border: string;
+}
+
+const MUTE_TONE: BadgeTone = { chip: 'bg-bg-elev text-text-dim', border: 'border-bg-elev-2' };
+
+const BADGE_TONE: Record<string, BadgeTone> = {
+  green: { chip: 'bg-accent-green/15 text-accent-green', border: 'border-accent-green/40' },
+  red: { chip: 'bg-accent-red/15 text-accent-red', border: 'border-accent-red/40' },
+  yellow: { chip: 'bg-accent-yellow/15 text-accent-yellow', border: 'border-accent-yellow/40' },
+  blue: { chip: 'bg-accent-blue/15 text-accent-blue', border: 'border-accent-blue/40' },
+  cyan: { chip: 'bg-accent-cyan/15 text-accent-cyan', border: 'border-accent-cyan/40' },
+  purple: { chip: 'bg-accent-purple/15 text-accent-purple', border: 'border-accent-purple/40' },
+  mute: MUTE_TONE,
 };
 
 function Badge({
@@ -324,10 +331,21 @@ function Badge({
       rel={external ? 'noreferrer' : undefined}
       className="inline-flex font-mono text-[10px] uppercase tracking-wider no-underline hover:no-underline"
     >
-      <span className="bg-bg-elev-2 text-text-mute border border-bg-elev-2 rounded-l-sm px-2 py-1">
+      <span
+        className={clsx(
+          'bg-bg-elev-2 text-text-mute border border-r-0 rounded-l-sm px-2 py-1',
+          (BADGE_TONE[tone] ?? MUTE_TONE).border,
+        )}
+      >
         {label}
       </span>
-      <span className={clsx('border border-l-0 rounded-r-sm px-2 py-1', BADGE_TONE[tone] ?? BADGE_TONE['mute'])}>
+      <span
+        className={clsx(
+          'border rounded-r-sm px-2 py-1',
+          (BADGE_TONE[tone] ?? MUTE_TONE).chip,
+          (BADGE_TONE[tone] ?? MUTE_TONE).border,
+        )}
+      >
         {value}
       </span>
     </a>
