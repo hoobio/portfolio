@@ -17,8 +17,8 @@ themes:
   - id: supply-chain-security
     title: Supply-chain security
     description: >-
-      Every artifact carries an SBOM. Every dependency is tracked. Every
-      pipeline can answer "what's in this build?" without anyone having to ask.
+      Every artifact ships with an SBOM, and every pipeline can answer
+      "what's in this build?" without anyone having to dig.
     receipts:
       - Reusable CycloneDX SBOM pipeline template rolled out across consumer repos
       - Self-hosted Dependency-Track instance with an opinionated domain/system/component hierarchy
@@ -66,10 +66,9 @@ themes:
   - id: ai-native-engineering
     title: AI-native engineering
     description: >-
-      Agents as part of the team. Multi-agent orchestration for routine
-      reviews, MCP servers for safe access to organisational systems,
-      and a layered skill harness that captures hard-won standards so they
-      survive across sessions.
+      Agents as part of the team: multi-agent orchestration for routine
+      reviews, MCP servers for safe access to organisational systems, and a
+      skill harness that keeps hard-won standards alive between sessions.
     receipts:
       - Multi-agent PR review across Azure DevOps and GitHub via MCP
       - Tenant-partitioned MCP servers for cross-tenant safety
