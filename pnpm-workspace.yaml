@@ -21,9 +21,30 @@ allowBuilds:
   protobufjs: true
   '@scarf/scarf': false
 
-# Force-resolve transitive axios to the latest stable. axios 1.13.x has
-# three published critical CVEs (CVE-2026-42043, CVE-2026-42044,
-# CVE-2026-42264); 1.16.x is patched. @usebruno/cli pulls in the
-# vulnerable line transitively so we pin via override.
+# Force-resolve vulnerable transitives. Every entry here is pulled in by
+# @usebruno/cli (the API-test runner, devDependency only - none of this
+# ships in the site bundle), which pins older lines than the fixes.
+#
+# Deliberately staying on the current major for nanoid and uuid: nanoid 4+
+# and uuid 12+ are ESM-only, and Bruno requires them from CJS. The patched
+# releases on the existing major close the advisories without that break.
 overrides:
+  # CVE-2026-42043 / -42044 / -42264, all critical, fixed in 1.16.x.
   axios: 1.19.0
+  # GHSA-hmw2-7cc7-3qxx (high) - CRLF injection via unescaped multipart
+  # field names. Fixed in 4.0.6; Bruno pins 4.0.4.
+  form-data: 4.0.6
+  # GHSA-28wg-ghj8-5hjv + GHSA-2v37-7h3g-55p8 (high) - generators can loop
+  # indefinitely on zero/negative size. Fixed in 3.3.18; Bruno pins 3.3.8.
+  # vite's postcss already resolves 3.3.18, so this dedupes rather than
+  # adding a second copy.
+  nanoid: 3.3.18
+  # GHSA-w5hq-g745-h8pq (medium) - missing buffer bounds check in v3/v5/v6.
+  # Fixed in 11.1.1; Bruno pins 10.0.0.
+  uuid: 11.1.1
+  # CVE-2026-73231 (high) - faker.helpers.fake reaches the Function
+  # constructor from a template, giving arbitrary code execution on
+  # attacker-controlled templates. Fixed in 10.5.0; Bruno pins 9.9.0.
+  # 10.6.0 exists but is still inside the 24h minimumReleaseAge window
+  # above; bump when it ages out if there's a reason to.
+  '@faker-js/faker': 10.5.0

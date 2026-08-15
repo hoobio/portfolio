@@ -6,6 +6,10 @@ settings:
 
 overrides:
   axios: 1.19.0
+  form-data: 4.0.6
+  nanoid: 3.3.18
+  uuid: 11.1.1
+  '@faker-js/faker': 10.5.0
 
 importers:
 
@@ -752,9 +756,9 @@ packages:
       '@noble/hashes':
         optional: true
 
-  '@faker-js/faker@9.9.0':
-    resolution: {integrity: sha512-OEl393iCOoo/z8bMezRlJu+GlRGlsKbUAN7jKB6LhnKoqKve5DXRpalbItIIcwnCjs1k/FOPjFzcA6Qn+H+YbA==}
-    engines: {node: '>=18.0.0', npm: '>=9.0.0'}
+  '@faker-js/faker@10.5.0':
+    resolution: {integrity: sha512-bsxD8WLS5lIj7aaoCx1YJkktqYj5vlBUE6HWzu2Q51ksrGJ0H737ECCKlFU7Yf8Br45z9t99frBp/J7kzbMPAg==}
+    engines: {node: ^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0, npm: '>=10'}
 
   '@grpc/grpc-js@1.14.4':
     resolution: {integrity: sha512-k9Dj3DV/itK9D06Y8f190Qgop7/Ui+D0njFV3LHMPwPT75DpXLQohE9Wmz0QElrJnzsjB7KPWiKJbOl7IPDArQ==}
@@ -2265,10 +2269,6 @@ packages:
       debug:
         optional: true
 
-  form-data@4.0.4:
-    resolution: {integrity: sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow==}
-    engines: {node: '>= 6'}
-
   form-data@4.0.6:
     resolution: {integrity: sha512-vKatAh4SlVfgbv+YtmhiRjhEMJsYpsG1Y2rMQtR+SVSbytsSD1YGzDIcrAJmdFec88u/+VoGmxnl+80gL1tRCQ==}
     engines: {node: '>= 6'}
@@ -2801,11 +2801,6 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  nanoid@3.3.8:
-    resolution: {integrity: sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
   neo-async@2.6.2:
     resolution: {integrity: sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==}
 
@@ -3301,9 +3296,8 @@ packages:
   util@0.10.4:
     resolution: {integrity: sha512-0Pm9hTQ3se5ll1XihRic3FDIku70C+iHUdT/W926rSgHV5QgXsYbKZN8MSC3tJtSkhuROzvsQjAaFENRXr+19A==}
 
-  uuid@10.0.0:
-    resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
-    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+  uuid@11.1.1:
+    resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
     hasBin: true
 
   vite@8.2.1:
@@ -4364,7 +4358,7 @@ snapshots:
 
   '@exodus/bytes@1.15.1': {}
 
-  '@faker-js/faker@9.9.0': {}
+  '@faker-js/faker@10.5.0': {}
 
   '@grpc/grpc-js@1.14.4':
     dependencies:
@@ -5082,7 +5076,7 @@ snapshots:
       csv-parse: 5.6.0
       debug: 4.4.3
       decomment: 0.9.5
-      form-data: 4.0.4
+      form-data: 4.0.6
       fs-extra: 10.1.0
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.6
@@ -5109,7 +5103,7 @@ snapshots:
       js-yaml: 4.3.1
       jscodeshift: 17.4.0
       lodash: 4.18.1
-      nanoid: 3.3.8
+      nanoid: 3.3.18
       xml2js: 0.6.2
     transitivePeerDependencies:
       - '@babel/preset-env'
@@ -5142,12 +5136,12 @@ snapshots:
       jsonwebtoken: 9.0.3
       lodash: 4.18.1
       moment: 2.30.1
-      nanoid: 3.3.8
+      nanoid: 3.3.18
       node-fetch: 2.7.0
       path: 0.12.7
       quickjs-emscripten: 0.32.0
       tv4: 1.3.0
-      uuid: 10.0.0
+      uuid: 11.1.1
       xml-formatter: 3.7.0
       xml2js: 0.6.2
       yaml: 2.9.0
@@ -5172,7 +5166,7 @@ snapshots:
       '@azure/core-rest-pipeline': 1.25.0
       '@azure/identity': 4.13.1
       '@azure/keyvault-secrets': 4.11.2
-      '@faker-js/faker': 9.9.0
+      '@faker-js/faker': 10.5.0
       '@grpc/grpc-js': 1.14.4
       '@grpc/proto-loader': 0.7.15
       '@smithy/node-http-handler': 4.5.3
@@ -5198,7 +5192,7 @@ snapshots:
 
   '@usebruno/schema@0.28.0':
     dependencies:
-      nanoid: 3.3.8
+      nanoid: 3.3.18
       yup: 0.32.11
 
   '@vitejs/plugin-react@6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
@@ -5886,14 +5880,6 @@ snapshots:
     optionalDependencies:
       debug: 4.4.3
 
-  form-data@4.0.4:
-    dependencies:
-      asynckit: 0.4.0
-      combined-stream: 1.0.8
-      es-set-tostringtag: 2.1.0
-      hasown: 2.0.4
-      mime-types: 2.1.35
-
   form-data@4.0.6:
     dependencies:
       asynckit: 0.4.0
@@ -6374,8 +6360,6 @@ snapshots:
   nanoclone@0.2.1: {}
 
   nanoid@3.3.18: {}
-
-  nanoid@3.3.8: {}
 
   neo-async@2.6.2: {}
 
@@ -6871,7 +6855,7 @@ snapshots:
     dependencies:
       inherits: 2.0.3
 
-  uuid@10.0.0: {}
+  uuid@11.1.1: {}
 
   vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0):
     dependencies:
