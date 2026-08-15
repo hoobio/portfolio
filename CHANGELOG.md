@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.8](https://github.com/hoobio/portfolio/compare/v0.1.7...v0.1.8) (2026-08-15)
+
+
+### Miscellaneous Chores
+
+* **deps:** ⬆️ pnpm 11.21.0 and correct the static-web-apps-deploy digest ([#62](https://github.com/hoobio/portfolio/issues/62)) ([935112e](https://github.com/hoobio/portfolio/commit/935112e78f7d5861ce1a53f6e92c0b8e0dbaab6c))
+* **deps:** ⬆️ take nanoid and uuid at the current major ([#60](https://github.com/hoobio/portfolio/issues/60)) ([e80e2d1](https://github.com/hoobio/portfolio/commit/e80e2d12c7acdf7754ea27f495d44fd9f15b10b1))
+
 ## [0.1.7](https://github.com/hoobio/portfolio/compare/v0.1.6...v0.1.7) (2026-08-15)
 
 
