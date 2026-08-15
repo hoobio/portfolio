@@ -6,7 +6,7 @@ export function Themes({ themes }: { themes: Portfolio['themes'] }) {
     <Section
       id="themes"
       title="recurring themes"
-      caption="Higher-order patterns across the work. Each one comes with receipts."
+      caption="The same jobs keep turning up at different scales. Evidence under each."
     >
       <div className="grid gap-4 md:grid-cols-2">
         {themes.map((t) => (

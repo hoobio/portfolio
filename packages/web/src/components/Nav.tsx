@@ -1,22 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import clsx from 'clsx';
 import { Link, useLocation } from 'react-router-dom';
-
-function scrollToSection(id: string) {
-  const el = document.getElementById(id);
-  if (!el) return false;
-  // Reset the target page's internal vertical scroll, snap the window to
-  // the top so the sticky nav doesn't cover the page's top padding, and
-  // scroll the horizontal rail (the section's parent) to align the target.
-  el.scrollTop = 0;
-  window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-  const rail = el.parentElement;
-  if (rail) {
-    rail.scrollTo({ left: el.offsetLeft, behavior: 'smooth' });
-  }
-  history.replaceState(null, '', `#${id}`);
-  return true;
-}
+import { scrollDeckTo } from '../lib/scrollDeck.js';
 
 const homeSections = [
   { id: 'top', label: 'home' },
@@ -61,7 +46,7 @@ export function Nav() {
                 key={s.id}
                 href={onHome ? `#${s.id}` : `/#${s.id}`}
                 onClick={(e: MouseEvent<HTMLAnchorElement>) => {
-                  if (onHome && scrollToSection(s.id)) e.preventDefault();
+                  if (onHome && scrollDeckTo(s.id)) e.preventDefault();
                 }}
                 className={clsx(
                   'transition-colors',
@@ -146,7 +131,7 @@ function MobileSectionPicker({ activeId }: { activeId: string }) {
                   role="menuitem"
                   href={`#${s.id}`}
                   onClick={(e) => {
-                    if (scrollToSection(s.id)) e.preventDefault();
+                    if (scrollDeckTo(s.id)) e.preventDefault();
                     setOpen(false);
                   }}
                   className={clsx(

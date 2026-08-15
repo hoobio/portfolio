@@ -86,7 +86,12 @@ describe('Skills', () => {
     expect(screen.getByText('Platform Engineering')).toBeInTheDocument();
     expect(screen.getByText('Kubernetes')).toBeInTheDocument();
     expect(screen.getByText('Languages')).toBeInTheDocument();
-    expect(screen.getAllByText('deep')[0]).toBeInTheDocument();
+  });
+
+  it('badges non-deep groups only', () => {
+    render(<Skills skills={portfolioFixture.skills} />);
+    expect(screen.getByText('working')).toBeInTheDocument();
+    expect(screen.queryByText('deep')).not.toBeInTheDocument();
   });
 });
 

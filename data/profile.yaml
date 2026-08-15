@@ -9,19 +9,17 @@ location: Melbourne, Australia
 timezone: Australia/Melbourne
 
 headline: >-
-  Senior Platform Engineer building secure-by-default platforms at speed.
-  Azure-focused, Kubernetes-deep, identity-obsessed. AI-native in how I work.
+  I look after the platform a few hundred engineers ship on. Azure, Kubernetes,
+  identity, supply-chain security, and the agents that do the boring bits.
 
 tagline: Why do work twice? Do it right and automate it.
 
 summary: |
-  Senior Platform Engineer focused on speedy, secure delivery in an AI-native R&D org.
+  Speed and security only conflict when the platform makes them conflict. Most of my work is removing that conflict: making the secure path the path of least resistance for a few hundred engineers, then automating the friction out from underneath them.
 
-  Speed and security only conflict when the platform makes them conflict. Most of my work is removing that conflict: making the secure path the path of least resistance for hundreds of engineers, then automating the friction out from underneath them.
+  Day job is shared platform engineering: service mesh, identity modernisation, supply-chain security, regulated-environment resilience, and a GitOps developer platform. Outside of that I maintain open-source Windows tooling, contribute upstream to vulnerability-management projects, and run a homelab that doubles as a proving ground for patterns I bring back to work.
 
-  Day job is shared platform engineering: service mesh, identity modernisation, supply-chain security, regulated-environment resilience, and a GitOps developer platform. Outside the day job I maintain open-source Windows tooling, contribute upstream to vulnerability-management projects, and run a home-lab that doubles as a proving ground for patterns I bring back to work.
-
-  Heavy investment in agentic engineering as a force multiplier: multi-agent PR review, MCP servers wired into the dev platform, and a tuned harness of skills that encodes hard-won standards so they survive across sessions.
+  I use agents where they earn their keep: multi-agent review on my own pull requests, MCP servers wired into the dev platform, and a skill library that keeps hard-won standards consistent between sessions. The judgement calls stay mine.
 
 cloudFocus:
   primary: Azure
@@ -54,8 +52,8 @@ contact:
 availability:
   status: open-to-conversations
   description: >-
-    Open to talking platform engineering, agentic workflows, or secure-by-default systems.
-    Not actively job hunting.
+    Happy to talk platform engineering, agentic workflows, or secure-by-default
+    systems. Not job hunting.
 
 # Used for the JSON-LD Person schema and llms.txt
 seo:

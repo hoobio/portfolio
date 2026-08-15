@@ -6,8 +6,8 @@ export function AzureResources({ principles }: { principles: Portfolio['azureRes
     <Section
       id="azure"
       apiId="azure-resources"
-      title="azure resources by principle"
-      caption="Azure services grouped by the architectural intent they serve, not the product category."
+      title="azure resources"
+      caption="Grouped by what I use them for, not what Microsoft calls them."
     >
       <div className="space-y-6">
         {principles.map((p) => (

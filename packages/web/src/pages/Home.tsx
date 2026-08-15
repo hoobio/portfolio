@@ -10,6 +10,7 @@ import { Projects } from '../components/Projects.js';
 import { AzureResources } from '../components/AzureResources.js';
 import { Themes } from '../components/Themes.js';
 import { Sbom } from '../components/Sbom.js';
+import { scrollDeckTo } from '../lib/scrollDeck.js';
 
 const PAGES = [
   'top',
@@ -84,16 +85,8 @@ export function HomePage({ portfolio }: { portfolio: Portfolio }) {
   // never let the browser scroll the window so the page's top padding stays
   // visible under the sticky nav.
   useEffect(() => {
-    const rail = railRef.current;
-    if (!rail) return;
     const hash = (location.hash.replace(/^#/u, '') || 'top') as PageId;
-    const idx = PAGES.indexOf(hash);
-    if (idx < 0) return;
-    const target = rail.children[idx] as HTMLElement | undefined;
-    if (!target) return;
-    target.scrollTop = 0;
-    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-    rail.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
+    if (PAGES.includes(hash)) scrollDeckTo(hash);
   }, [location.hash]);
 
   // Broadcast the active section so the Nav can show a current-page
@@ -133,15 +126,9 @@ export function HomePage({ portfolio }: { portfolio: Portfolio }) {
   }, [activeIndex]);
 
   const goTo = (idx: number) => {
-    const rail = railRef.current;
-    if (!rail) return;
     const clamped = Math.max(0, Math.min(PAGES.length - 1, idx));
-    const target = rail.children[clamped] as HTMLElement | undefined;
-    if (!target) return;
-    target.scrollTop = 0;
-    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-    rail.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
-    history.replaceState(null, '', `#${PAGES[clamped]}`);
+    const id = PAGES[clamped];
+    if (id) scrollDeckTo(id);
   };
 
   return (
@@ -265,15 +252,7 @@ function PageDots({ activeIndex }: { activeIndex: number }) {
           href={`#${id}`}
           data-page-dot={id}
           onClick={(e) => {
-            const el = document.getElementById(id);
-            if (el) {
-              el.scrollTop = 0;
-              window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-              const rail = el.parentElement;
-              if (rail) rail.scrollTo({ left: el.offsetLeft, behavior: 'smooth' });
-              history.replaceState(null, '', `#${id}`);
-              e.preventDefault();
-            }
+            if (scrollDeckTo(id)) e.preventDefault();
           }}
           className={clsx(
             'home-page-dot pointer-events-auto rounded-full size-2 transition-colors',
