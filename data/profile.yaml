@@ -17,7 +17,7 @@ tagline: Why do work twice? Do it right and automate it.
 summary: |
   Speed and security only conflict when the platform makes them conflict. Most of my work is removing that conflict: making the secure path the path of least resistance for a few hundred engineers, then automating the friction out from underneath them.
 
-  Day job is shared platform engineering: service mesh, identity modernisation, supply-chain security, regulated-environment resilience, and a GitOps developer platform. Outside of that I maintain open-source Windows tooling, contribute upstream to vulnerability-management projects, and run a homelab that doubles as a proving ground for patterns I bring back to work.
+  Fourteen years in the industry, the last ten in DevOps and platform roles. These days that's shared platform engineering: service mesh, identity modernisation, supply-chain security, regulated-environment resilience, and a GitOps developer platform. Outside of that I maintain open-source Windows tooling, contribute upstream to vulnerability-management projects, and run a homelab that doubles as a proving ground for patterns I bring back to work.
 
   I use agents where they earn their keep: multi-agent review on my own pull requests, MCP servers wired into the dev platform, and a skill library that keeps hard-won standards consistent between sessions. The judgement calls stay mine.
 
