@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
 
+// The API lives on a separate origin from the site now, so it can't ride
+// Playwright's `baseURL`. Defaults match the local vite-preview setup;
+// PDT (remote) passes API_BASE_URL explicitly.
+const apiBase = process.env.API_BASE_URL ?? 'http://localhost:4173/api';
+
 test.describe('portfolio smoke', () => {
   test('loads the hero with the role headline', async ({ page }) => {
     await page.goto('/');
@@ -38,15 +43,23 @@ test.describe('portfolio smoke', () => {
     expect(await response.text()).toMatch(/Alex Hill/i);
   });
 
+  test('version.json is served at root', async ({ request }) => {
+    const response = await request.get('/version.json');
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body.status).toBe('ok');
+    expect(body.version).toEqual(expect.any(String));
+  });
+
   test('Cache-Control is set on the portfolio API', async ({ request }) => {
-    const response = await request.get('/api/portfolio');
+    const response = await request.get(`${apiBase}/portfolio.json`);
     expect(response.status()).toBe(200);
     const cacheControl = response.headers()['cache-control'];
     expect(cacheControl).toMatch(/s-maxage/);
   });
 
   test('YAML view endpoint serves the source file', async ({ request }) => {
-    const response = await request.get('/api/portfolio/principles.yaml');
+    const response = await request.get(`${apiBase}/portfolio/principles.yaml`);
     expect(response.status()).toBe(200);
     expect(response.headers()['content-type']).toContain('yaml');
     expect(await response.text()).toMatch(/principles:/);

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { apiUrl } from '../api.js';
 
 interface SectionProps {
   id: string;
@@ -11,8 +12,8 @@ interface SectionProps {
 
 export function Section({ id, apiId, title, caption, children }: SectionProps) {
   const slug = apiId ?? id;
-  const jsonUrl = `/api/portfolio/${slug}`;
-  const yamlUrl = `/api/portfolio/${slug}.yaml`;
+  const jsonUrl = apiUrl(`portfolio/${slug}.json`);
+  const yamlUrl = apiUrl(`portfolio/${slug}.yaml`);
   return (
     <section id={id} className="pt-8 md:pt-12 scroll-mt-16">
       <header className="mb-6 font-mono">

@@ -15,7 +15,12 @@ principles:
       - name: Virtual Machine Scale Sets
         usage: Underpin AKS node pools and legacy automation workloads.
       - name: Azure Container Apps
-        usage: Lightweight container hosting. Used here for this portfolio (free consumption tier).
+        usage: Lightweight container hosting for internal services.
+      - name: Azure Static Web Apps
+        usage: >-
+          Free-tier static hosting. Used here for this portfolio - the SPA
+          ships to Static Web Apps and the API is pre-rendered JSON published
+          to Blob Storage, so nothing runs at request time.
       - name: Azure App Service
         usage: Pre-AKS hosting for cloud services and legacy products.
       - name: Azure Container Instances
@@ -76,7 +81,9 @@ principles:
       - name: Azure SQL
         usage: Workload-specific, regulated workloads.
       - name: Azure Storage (Blob, Table, Queue)
-        usage: Per-deployment artifact and state storage.
+        usage: >-
+          Per-deployment artifact and state storage. Fronts this site's
+          pre-rendered portfolio API at api.hoobi.dev.
       - name: Service Bus
         usage: Asynchronous messaging between services.
       - name: Event Grid

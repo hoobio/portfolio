@@ -129,7 +129,7 @@ describe('Footer', () => {
   it('renders the year and author', () => {
     render(<Footer profile={portfolioFixture.profile} generatedAt={portfolioFixture.generatedAt} />);
     expect(screen.getByText(/Alex Hill/u)).toBeInTheDocument();
-    expect(screen.getByText('/api/portfolio')).toBeInTheDocument();
+    expect(screen.getByText('portfolio.json')).toBeInTheDocument();
     expect(screen.getByText('/llms.txt')).toBeInTheDocument();
   });
 });

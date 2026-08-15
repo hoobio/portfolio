@@ -1,25 +1,35 @@
-// Workload module: Container Apps Environment + Container App + Storage.
-// Deployed at resource-group scope by infra/main.bicep.
+// Workload module: Static Web App + the pre-existing API storage account.
+// Deployed at resource-group scope by operations/provision/main.bicep.
+//
+// There is no compute here. The SPA is a Static Web App (Free tier); the
+// portfolio API is pre-rendered JSON/YAML published to blob storage by CI.
 
 param location string
 param shortName string
-param containerImage string
 param publicBaseUrl string
-param appVersion string
-param findingsUrl string = ''
-param sbomUrl string = ''
 param tags object
 
-@description('Custom hostname to bind to the Container App ingress, e.g. hoobi.io. Empty disables.')
-param customHostname string = ''
+@description('Name of the pre-existing storage account that fronts api.hoobi.dev. Fixed, not uniqueString - it already exists and its custom domain is already validated.')
+param apiStorageAccountName string
 
-@description('Name of the pre-uploaded managed-environment certificate to bind to customHostname. Required when customHostname is set.')
-param certificateName string = ''
+@description('Public-read blob container that api.hoobi.dev serves from.')
+param apiContainerName string = 'portfolio'
 
-// --- Storage account for public-read SBOMs ---
+@description('Custom domain already bound to the storage account. Declared explicitly: omitting customDomain on an account that has one clears the binding.')
+param apiCustomDomain string
 
-resource storage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
-  name: take('${shortName}sbom${uniqueString(resourceGroup().id)}', 24)
+@description('Region for the Static Web App. Static Web Apps is not available in Australian regions; this only affects the (unused) managed Functions runtime, not global CDN latency.')
+param siteLocation string = 'eastasia'
+
+// --- Pre-existing storage account, adopted rather than created ---
+//
+// CRITICAL: every property below must match the live account exactly (SKU,
+// kind, accessTier, TLS settings) or this PUT either fails outright or
+// silently resets something not listed here to its RP default. Run
+// `az storage account show -n <name> -g <rg>` and `az deployment group
+// what-if` before the first deploy against this resource - see SETUP.md.
+resource apiStorage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
+  name: apiStorageAccountName
   location: location
   tags: tags
   sku: { name: 'Standard_LRS' }
@@ -31,18 +41,24 @@ resource storage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
     supportsHttpsTrafficOnly: true
     allowSharedKeyAccess: true
     publicNetworkAccess: 'Enabled'
+    customDomain: { name: apiCustomDomain, useSubDomainName: false }
   }
 }
 
-resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2024-01-01' = {
-  parent: storage
+resource apiBlobService 'Microsoft.Storage/storageAccounts/blobServices@2024-01-01' = {
+  parent: apiStorage
   name: 'default'
   properties: {
     cors: {
       corsRules: [
         {
+          // Wildcard is deliberate, not lax: the container is already
+          // anonymously public-read, so an origin allow-list would grant no
+          // extra privilege. It also sidesteps Cloudflare caching an
+          // origin-specific Access-Control-Allow-Origin against the wrong
+          // client (Blob Storage doesn't reliably vary on Origin).
           allowedOrigins: ['*']
-          allowedMethods: ['GET', 'HEAD']
+          allowedMethods: ['GET', 'HEAD', 'OPTIONS']
           allowedHeaders: ['*']
           exposedHeaders: ['*']
           maxAgeInSeconds: 3600
@@ -52,119 +68,38 @@ resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2024-01-01'
   }
 }
 
-resource sbomContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2024-01-01' = {
-  parent: blobService
-  name: 'sbom'
+resource apiContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2024-01-01' = {
+  parent: apiBlobService
+  name: apiContainerName
   properties: {
     publicAccess: 'Blob'
   }
 }
 
-// --- Container Apps environment (Consumption only, no Log Analytics) ---
+// --- Static Web App (Free tier) ---
 
-resource appEnv 'Microsoft.App/managedEnvironments@2025-01-01' = {
-  name: '${shortName}-env'
-  location: location
+resource site 'Microsoft.Web/staticSites@2024-04-01' = {
+  name: '${shortName}-site'
+  location: siteLocation
   tags: tags
+  sku: {
+    name: 'Free'
+    tier: 'Free'
+  }
   properties: {
-    workloadProfiles: [
-      {
-        name: 'Consumption'
-        workloadProfileType: 'Consumption'
-      }
-    ]
-    zoneRedundant: false
+    // 'Custom' stops Azure trying to own a workflow file in the repo or poll
+    // a GitHub connection - CI pushes content with a deployment token
+    // instead. Custom domains are bound out-of-band (see SETUP.md): binding
+    // them here would block the deployment on DNS validation completing.
+    provider: 'Custom'
+    stagingEnvironmentPolicy: 'Disabled'
+    allowConfigFileUpdates: true
+    enterpriseGradeCdnStatus: 'Disabled'
   }
 }
 
-// --- Container App ---
-
-resource app 'Microsoft.App/containerApps@2025-01-01' = {
-  name: '${shortName}-app'
-  location: location
-  tags: tags
-  properties: {
-    environmentId: appEnv.id
-    workloadProfileName: 'Consumption'
-    configuration: {
-      activeRevisionsMode: 'Single'
-      ingress: {
-        external: true
-        targetPort: 8090
-        transport: 'auto'
-        allowInsecure: false
-        customDomains: empty(customHostname) ? [] : [
-          {
-            name: customHostname
-            bindingType: 'SniEnabled'
-            certificateId: '${appEnv.id}/certificates/${certificateName}'
-          }
-        ]
-        traffic: [
-          {
-            latestRevision: true
-            weight: 100
-          }
-        ]
-      }
-    }
-    template: {
-      containers: [
-        {
-          name: 'portfolio'
-          image: containerImage
-          resources: {
-            cpu: json('0.25')
-            memory: '0.5Gi'
-          }
-          env: [
-            { name: 'NODE_ENV', value: 'production' }
-            { name: 'PORT', value: '8090' }
-            { name: 'HOST', value: '0.0.0.0' }
-            { name: 'LOG_LEVEL', value: 'info' }
-            { name: 'PUBLIC_BASE_URL', value: publicBaseUrl }
-            { name: 'APP_VERSION', value: appVersion }
-            { name: 'FINDINGS_URL', value: findingsUrl }
-            { name: 'SBOM_URL', value: sbomUrl }
-          ]
-          probes: [
-            {
-              type: 'Liveness'
-              httpGet: { path: '/api/health', port: 8090 }
-              initialDelaySeconds: 5
-              periodSeconds: 30
-              timeoutSeconds: 3
-              failureThreshold: 3
-            }
-            {
-              type: 'Readiness'
-              httpGet: { path: '/api/health', port: 8090 }
-              initialDelaySeconds: 3
-              periodSeconds: 10
-              timeoutSeconds: 3
-              failureThreshold: 3
-            }
-          ]
-        }
-      ]
-      scale: {
-        minReplicas: 0
-        maxReplicas: 1
-        rules: [
-          {
-            name: 'http-burst'
-            http: {
-              metadata: {
-                concurrentRequests: '20'
-              }
-            }
-          }
-        ]
-      }
-    }
-  }
-}
-
-output containerAppFqdn string = app.properties.configuration.ingress.fqdn
-output storageAccountName string = storage.name
-output sbomBlobBase string = '${storage.properties.primaryEndpoints.blob}sbom/'
+output staticSiteName string = site.name
+output staticSiteDefaultHostname string = site.properties.defaultHostname
+output apiStorageAccountName string = apiStorage.name
+output apiBaseUrl string = 'https://${apiCustomDomain}/${apiContainerName}'
+output publicBaseUrl string = publicBaseUrl

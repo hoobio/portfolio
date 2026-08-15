@@ -7,10 +7,10 @@ import { portfolioFixture, sbomFixture } from './fixtures.js';
 function mockFetch() {
   return vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
-    if (url.endsWith('/api/portfolio')) {
+    if (url.endsWith('/api/portfolio.json')) {
       return { ok: true, status: 200, json: async () => portfolioFixture } as Response;
     }
-    if (url.endsWith('/api/sbom')) {
+    if (url.endsWith('/api/sbom.json')) {
       return { ok: true, status: 200, json: async () => sbomFixture } as Response;
     }
     return { ok: false, status: 404, json: async () => ({}) } as Response;

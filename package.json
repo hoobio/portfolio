@@ -2,7 +2,7 @@
   "name": "hoobi-portfolio",
   "version": "0.1.5",
   "private": true,
-  "description": "Living resume and portfolio. Data-driven, served from a Fastify API with a React front end.",
+  "description": "Living resume and portfolio. Data-driven, pre-rendered to static JSON at build time and served by a React front end.",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@11.2.2",
@@ -10,28 +10,29 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "pnpm -r run build",
+    "build": "pnpm --filter @hoobi-portfolio/schemas run build && pnpm --filter @hoobi-portfolio/generator run build && pnpm --filter @hoobi-portfolio/web run build",
     "dev": "pnpm -r --parallel run dev",
-    "dev:api": "pnpm --filter @hoobi-portfolio/api run dev",
+    "dev:generator": "pnpm --filter @hoobi-portfolio/generator run dev",
     "dev:web": "pnpm --filter @hoobi-portfolio/web run dev",
-    "start:api": "node packages/api/dist/server.js",
+    "preview": "pnpm --filter @hoobi-portfolio/web exec vite preview --port 4173 --strictPort",
+    "build:preview": "VITE_API_BASE_URL=http://localhost:4173/api pnpm run build && pnpm run preview",
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
     "test:coverage": "pnpm -r run test:coverage",
-    "test:e2e": "start-server-and-test 'pnpm run start:api' http-get://localhost:8090/api/health 'playwright test --project=local'",
+    "test:e2e": "start-server-and-test build:preview http://localhost:4173/ 'playwright test --project=local'",
     "test:e2e:against": "playwright test --project=remote",
-    "test:api": "start-server-and-test 'pnpm run start:api' http-get://localhost:8090/api/health 'cd tests/api && bru run . --env local'",
+    "test:api": "start-server-and-test build:preview http://localhost:4173/ 'cd tests/api && bru run . --env local'",
     "test:api:against": "cd tests/api && bru run . --env remote",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
-    "@usebruno/cli": "3.5.3",
+    "@usebruno/cli": "4.0.0",
     "oxlint": "1.78.0",
     "prettier": "3.9.6",
     "start-server-and-test": "3.0.12",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   }
 }

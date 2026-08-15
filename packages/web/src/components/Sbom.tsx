@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import type { SbomSummary } from '@hoobi-portfolio/schemas';
 import { Section } from './Section.js';
 import { TerminalPrompt } from './TerminalPrompt.js';
-import { api } from '../api.js';
+import { api, apiUrl } from '../api.js';
 
 interface EcosystemBucket {
   name: string;
@@ -211,10 +211,10 @@ function SbomHeader({ sbom }: { sbom: SbomSummary }) {
           ) : null}
         </div>
         <div className="text-text-dim text-xs">
-          <a href="/api/sbom/raw" target="_blank" rel="noreferrer" className="mr-3">
+          <a href={apiUrl('sbom.cdx.json')} target="_blank" rel="noreferrer" className="mr-3">
             raw .cdx.json
           </a>
-          <a href="/api/sbom" target="_blank" rel="noreferrer">
+          <a href={apiUrl('sbom.json')} target="_blank" rel="noreferrer">
             parsed JSON
           </a>
         </div>
@@ -289,7 +289,7 @@ function BuildBadges() {
       <Badge label="ci" value={ciLabel} tone={ciTone} href={`https://github.com/${GITHUB_REPO}/actions/workflows/ci.yml`} />
       <Badge label="release" value={state.release ?? '...'} tone="blue" href={`https://github.com/${GITHUB_REPO}/releases/latest`} />
       <Badge label="license" value="MIT" tone="cyan" href={`https://github.com/${GITHUB_REPO}/blob/main/LICENSE`} />
-      <Badge label="sbom" value="cyclonedx" tone="purple" href="/api/sbom" />
+      <Badge label="sbom" value="cyclonedx" tone="purple" href={apiUrl('sbom.json')} />
       <Badge label="last commit" value={state.lastCommit ?? '...'} tone="mute" href={`https://github.com/${GITHUB_REPO}/commits/main`} />
     </div>
   );
@@ -344,8 +344,8 @@ function VulnerabilityCard({ sbom }: { sbom: SbomSummary }) {
         </h3>
         <p className="mt-2 text-text-dim">
           No vulnerability scan available yet. The deploy pipeline uploads this SBOM to
-          Dependency-Track and writes a findings sidecar that the next build serves from
-          <code className="mx-1 text-accent-cyan">/api/sbom</code>.
+          Dependency-Track and writes a findings sidecar that the next build bakes into
+          <code className="mx-1 text-accent-cyan">sbom.json</code>.
         </p>
       </div>
     );

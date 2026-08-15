@@ -273,15 +273,17 @@ export const SbomSummary = z
 
 export type SbomSummary = z.infer<typeof SbomSummary>;
 
-export const HealthResponse = z
+// Static freshness signal emitted at build time, replacing a live liveness
+// probe now that there is no server to probe.
+export const SiteVersion = z
   .object({
     status: z.literal('ok'),
-    uptimeSeconds: z.number().nonnegative(),
     version: z.string(),
+    generatedAt: z.string(),
   })
-  .meta({ id: 'HealthResponse' });
+  .meta({ id: 'SiteVersion' });
 
-export type HealthResponse = z.infer<typeof HealthResponse>;
+export type SiteVersion = z.infer<typeof SiteVersion>;
 
 // Re-export the iso date helpers in case downstream code wants them.
 export { yyyymm, isoDate };

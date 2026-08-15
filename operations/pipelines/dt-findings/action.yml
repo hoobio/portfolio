@@ -1,9 +1,10 @@
-name: Dependency-Track findings -> Azure Blob
-description: |
-  Polls Dependency-Track for the most recent findings on a project version,
-  transforms the response into the site's findings.json shape, and uploads
-  it to public-read Azure Blob storage. Run this AFTER the SBOM has been
-  uploaded to Dependency-Track so the project has time to be analysed.
+name: Dependency-Track findings
+description: >-
+  Polls Dependency-Track for the most recent findings on a project version
+  and writes them locally in the site's findings.json shape. Run this AFTER
+  the SBOM has been uploaded to Dependency-Track so the project has time to
+  be analysed. The output is picked up automatically by the generator: it
+  looks for findings.json next to the SBOM it was given.
 
 inputs:
   dt-host:
@@ -18,36 +19,32 @@ inputs:
   project-version:
     description: DT project version
     required: true
-  azure-storage-account:
-    description: Azure Storage account name to upload findings to
-    required: true
-  azure-container:
-    description: Blob container name
+  output-path:
+    description: Where to write the findings.json
     required: false
-    default: sbom
+    default: packages/generator/sbom/findings.json
   poll-timeout-seconds:
     description: Maximum time to wait for DT analysis to complete
     required: false
     default: '180'
 
 outputs:
-  blob-url:
-    description: Public URL of the uploaded findings.json
-    value: ${{ steps.upload.outputs.blob-url }}
+  findings-path:
+    description: Path to the written findings.json, empty if the DT project was never found
+    value: ${{ steps.poll.outputs.findings-path }}
 
 runs:
   using: composite
   steps:
-    - name: Poll DT for findings + upload to Azure Blob
-      id: upload
+    - name: Poll DT for findings
+      id: poll
       shell: bash
       env:
         DT_HOST: ${{ inputs.dt-host }}
         DT_API_KEY: ${{ inputs.dt-api-key }}
         PROJECT_NAME: ${{ inputs.project-name }}
         PROJECT_VERSION: ${{ inputs.project-version }}
-        STORAGE_ACCOUNT: ${{ inputs.azure-storage-account }}
-        CONTAINER: ${{ inputs.azure-container }}
+        OUTPUT_PATH: ${{ inputs.output-path }}
         TIMEOUT_S: ${{ inputs.poll-timeout-seconds }}
       run: |
         set -euo pipefail
@@ -68,8 +65,8 @@ runs:
         done
 
         if [ -z "$project_uuid" ]; then
-          echo "::warning::DT project not found within timeout; skipping findings upload"
-          echo "blob-url=" >> "$GITHUB_OUTPUT"
+          echo "::warning::DT project not found within timeout; skipping findings"
+          echo "findings-path=" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -91,9 +88,10 @@ runs:
           "https://$DT_HOST/api/v1/finding/project/$project_uuid" || echo "[]")
         echo "$findings_raw" > findings.raw.json
 
-        # Project URL for the UI.
         project_url="https://$DT_HOST/projects/$project_uuid"
         now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+        mkdir -p "$(dirname "$OUTPUT_PATH")"
 
         # Transform DT findings into the site's expected shape.
         jq --arg source "Dependency-Track" \
@@ -118,35 +116,15 @@ runs:
                   url: ("https://\($projectUrl|capture("https://(?<h>[^/]+)").h)/vulnerability/?source=\(.vulnerability.source)&vulnId=\(.vulnerability.vulnId)")
                 }
               }]
-            }' findings.raw.json > findings.json
+            }' findings.raw.json > "$OUTPUT_PATH"
 
-        finding_count=$(jq '.findings | length' findings.json)
+        finding_count=$(jq '.findings | length' "$OUTPUT_PATH")
         echo "Findings: $finding_count"
-
-        # Upload to Azure Blob (using whatever az login session exists in the workflow).
-        az storage blob upload \
-          --account-name "$STORAGE_ACCOUNT" \
-          --container-name "$CONTAINER" \
-          --name "findings/$PROJECT_VERSION/findings.json" \
-          --file findings.json \
-          --content-type application/json \
-          --overwrite --auth-mode login
-
-        az storage blob upload \
-          --account-name "$STORAGE_ACCOUNT" \
-          --container-name "$CONTAINER" \
-          --name "findings/latest/findings.json" \
-          --file findings.json \
-          --content-type application/json \
-          --overwrite --auth-mode login
-
-        blob_url="https://$STORAGE_ACCOUNT.blob.core.windows.net/$CONTAINER/findings/latest/findings.json"
-        echo "blob-url=$blob_url" >> "$GITHUB_OUTPUT"
+        echo "findings-path=$OUTPUT_PATH" >> "$GITHUB_OUTPUT"
 
         {
           echo "## Dependency-Track findings"
           echo
           echo "- Project: [\`$PROJECT_NAME@$PROJECT_VERSION\`]($project_url)"
           echo "- Findings: **$finding_count**"
-          echo "- Blob: $blob_url"
         } >> "$GITHUB_STEP_SUMMARY"

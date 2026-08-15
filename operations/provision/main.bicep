@@ -3,37 +3,30 @@
 // has Contributor scoped at the group level - we never create or modify the
 // RG from this template.
 //
-// Cost target: less than 50c/month at portfolio traffic.
-// - Container Apps Consumption: 180k vCPU-seconds + 360k GiB-seconds free/month.
-//   Scale-to-zero (minReplicas: 0) keeps it idle when nobody's looking.
-// - Storage Account Standard_LRS Hot: KB of blobs = ~$0.
-// - No Log Analytics workspace, no ACR (image is on GHCR), no Front Door.
+// Cost target: effectively $0/month at portfolio traffic.
+// - Static Web App Free tier: 100GB/month bandwidth, no compute billed.
+// - Storage Account Standard_LRS Hot: KB-to-low-MB of JSON/YAML blobs = ~$0.
+// - No compute of any kind at runtime. Everything is built and published by CI.
 
 targetScope = 'resourceGroup'
-
-@description('Container image, e.g. ghcr.io/hoobio/portfolio:1.2.3')
-param containerImage string
 
 @description('Short name component for resources (no dashes, lowercase).')
 param shortName string = 'hoobiportfolio'
 
-@description('Public base URL the app advertises (used in sitemap, llms.txt).')
+@description('Public base URL the site advertises (used in sitemap, llms.txt, robots.txt).')
 param publicBaseUrl string = ''
 
-@description('App version stamped into /api/health.')
-param appVersion string = 'dev'
+@description('Name of the pre-existing storage account that fronts api.hoobi.dev.')
+param apiStorageAccountName string
 
-@description('Public Blob URL where the latest findings.json lives. Empty means findings UI hidden.')
-param findingsUrl string = ''
+@description('Public-read blob container that api.hoobi.dev serves from.')
+param apiContainerName string = 'portfolio'
 
-@description('Public Blob URL where the latest CycloneDX SBOM lives. Empty falls back to the image-baked SBOM at /app/public/sbom.cdx.json.')
-param sbomUrl string = ''
+@description('Custom domain already bound to the storage account, e.g. api.hoobi.dev.')
+param apiCustomDomain string
 
-@description('Custom hostname to bind to the Container App ingress, e.g. hoobi.io. Empty disables.')
-param customHostname string = ''
-
-@description('Name of the pre-uploaded managed-environment certificate to bind to customHostname.')
-param certificateName string = ''
+@description('Region for the Static Web App (not available in Australian regions).')
+param siteLocation string = 'eastasia'
 
 @description('Tags applied to all resources.')
 param tags object = {
@@ -46,17 +39,16 @@ module workload 'modules/workload.bicep' = {
   params: {
     location: resourceGroup().location
     shortName: shortName
-    containerImage: containerImage
     publicBaseUrl: publicBaseUrl
-    appVersion: appVersion
-    findingsUrl: findingsUrl
-    sbomUrl: sbomUrl
-    customHostname: customHostname
-    certificateName: certificateName
+    apiStorageAccountName: apiStorageAccountName
+    apiContainerName: apiContainerName
+    apiCustomDomain: apiCustomDomain
+    siteLocation: siteLocation
     tags: tags
   }
 }
 
-output containerAppFqdn string = workload.outputs.containerAppFqdn
-output storageAccountName string = workload.outputs.storageAccountName
-output sbomBlobBase string = workload.outputs.sbomBlobBase
+output staticSiteName string = workload.outputs.staticSiteName
+output staticSiteDefaultHostname string = workload.outputs.staticSiteDefaultHostname
+output apiStorageAccountName string = workload.outputs.apiStorageAccountName
+output apiBaseUrl string = workload.outputs.apiBaseUrl

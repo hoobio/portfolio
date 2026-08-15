@@ -1,15 +1,19 @@
 packages:
   - packages/*
 
-# pnpm v10+ requires this opt-in for `pnpm deploy` to assemble a
-# self-contained workspace-aware tree without `--legacy`. Without it,
-# deploy falls back to a path that doesn't always strip devDependencies
-# cleanly under hoisted node_modules.
-injectWorkspacePackages: true
+# Don't resolve to a version published in the last 24 hours. Compromised
+# releases are usually yanked within hours, so the delay is the cheapest
+# defence against a supply-chain attack landing straight in the lockfile.
+# Measured in minutes. Belt-and-braces alongside Renovate's own cooldown
+# (renovate.json inherits a matching 24h minimumReleaseAge from the
+# self-hosted runner's global config) - this one also covers local
+# `pnpm add`/`pnpm update`, which Renovate's setting doesn't reach.
+minimumReleaseAge: 1440
 
-# Build scripts must be allow-listed explicitly in pnpm v10+. esbuild needs
-# its install-time postinstall to drop the native binary into node_modules;
-# protobufjs ships with @bufbuild deps used by playwright tooling.
+# Build scripts must be allow-listed explicitly in pnpm v10+. esbuild is
+# transitive now (via tsx and vite, not a direct dependency) but still needs
+# its install-time postinstall to fetch the native binary. protobufjs ships
+# with @bufbuild deps used by playwright tooling.
 allowBuilds:
   esbuild: true
   protobufjs: true

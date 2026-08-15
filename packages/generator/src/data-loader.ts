@@ -43,7 +43,10 @@ export async function loadData(dataDir: string): Promise<LoadedData> {
     projects: projects.projects,
     azureResources: azureResources.principles,
     themes: themes.themes,
-    generatedAt: new Date().toISOString(),
+    // Deterministic in CI (BUILD_TIMESTAMP is the release commit's time) so
+    // a rebuild with unchanged data produces byte-identical output and
+    // doesn't bust every blob's cache. Falls back to "now" locally.
+    generatedAt: process.env['BUILD_TIMESTAMP'] ?? new Date().toISOString(),
   });
 
   return {
