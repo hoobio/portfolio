@@ -51,4 +51,4 @@ overrides:
   # attacker-controlled templates. Fixed in 10.5.0; Bruno pins 9.9.0.
   # 10.6.0 exists but is still inside the 24h minimumReleaseAge window
   # above; bump when it ages out if there's a reason to.
-  '@faker-js/faker': 10.5.0
+  '@faker-js/faker': 10.6.0
