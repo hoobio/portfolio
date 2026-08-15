@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/hoobio/portfolio/compare/v0.1.6...v0.1.7) (2026-08-15)
+
+
+### Bug Fixes
+
+* 🐛 hoist zod definitions into components.schemas so Swagger UI resolves ([#56](https://github.com/hoobio/portfolio/issues/56)) ([8a93516](https://github.com/hoobio/portfolio/commit/8a93516e223e405910b89024ebd18b361856b54d))
+
 ## [0.1.6](https://github.com/hoobio/portfolio/compare/v0.1.5...v0.1.6) (2026-08-15)
 
 
