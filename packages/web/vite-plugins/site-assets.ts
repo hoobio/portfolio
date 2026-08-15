@@ -23,9 +23,19 @@ function serveFrom(
   return (req, res, next) => {
     const urlPath = req.url?.split('?')[0];
     const rel = urlPath ? resolve(urlPath) : null;
+    // null means "not this handler's namespace" - fall through to Vite.
+    // A recognised-but-missing file must end the request here with a real
+    // 404: falling through via next() lets Vite's SPA fallback serve
+    // index.html with a 200, masking a genuinely absent blob (e.g. no SBOM
+    // generated in this build) as if it existed.
     if (rel === null) return next();
     const filePath = join(root, rel);
-    if (!existsSync(filePath) || !statSync(filePath).isFile()) return next();
+    if (!existsSync(filePath) || !statSync(filePath).isFile()) {
+      res.statusCode = 404;
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.end('Not found');
+      return;
+    }
     res.setHeader('Content-Type', MIME[extname(filePath)] ?? 'application/octet-stream');
     for (const [key, value] of Object.entries(headers(filePath))) res.setHeader(key, value);
     res.end(readFileSync(filePath));

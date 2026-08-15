@@ -15,17 +15,19 @@
     "dev:generator": "pnpm --filter @hoobi-portfolio/generator run dev",
     "dev:web": "pnpm --filter @hoobi-portfolio/web run dev",
     "preview": "pnpm --filter @hoobi-portfolio/web exec vite preview --port 4173 --strictPort",
-    "build:preview": "VITE_API_BASE_URL=http://localhost:4173/api pnpm run build && pnpm run preview",
+    "build:preview": "pnpm --filter @hoobi-portfolio/schemas run build && pnpm --filter @hoobi-portfolio/generator run build && pnpm --filter @hoobi-portfolio/web run build:preview-test && pnpm run preview",
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
     "test:coverage": "pnpm -r run test:coverage",
     "test:e2e": "start-server-and-test build:preview http://localhost:4173/ 'playwright test --project=local'",
     "test:e2e:against": "playwright test --project=remote",
-    "test:api": "start-server-and-test build:preview http://localhost:4173/ 'cd tests/api && bru run . --env local'",
+    "test:api:local:run": "cd tests/api && bru run . --env local",
+    "test:api": "start-server-and-test build:preview http://localhost:4173/ test:api:local:run",
     "test:api:against": "cd tests/api && bru run . --env remote",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "verify": "pnpm install --frozen-lockfile && pnpm run lint && pnpm run typecheck && pnpm run test:coverage && pnpm run build && pnpm run test:e2e && pnpm run test:api"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

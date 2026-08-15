@@ -101,6 +101,12 @@ If a previous Vite session is stuck, Vite hops to the next free port (5174, 5175
 
 To exercise the exact production-shaped artifact locally: `pnpm run build && pnpm run preview` serves the real build via `vite preview` on `http://localhost:4173`. This is what `pnpm run test:e2e` / `test:api` run against.
 
+### Before pushing: `pnpm run verify`
+
+Runs, in order, what CI's fast-check + `UI Tests` + `API Tests` jobs run: `pnpm install --frozen-lockfile` (catches unapproved-postinstall-script and lockfile drift that a plain `pnpm install` won't), lint, typecheck, `test:coverage`, `build`, `test:e2e`, `test:api`. Run it before pushing rather than discovering a CI-only failure after the fact.
+
+One thing it can't fully replicate: `ui-tests`/`api-tests` in CI never run the real SBOM-generation step (only `build`/`generate-sbom` do), so `packages/generator/sbom/sbom.cdx.json` genuinely doesn't exist in those jobs' workspace - `pnpm run verify` reproduces that "no SBOM" state locally too. Tests that touch the SBOM (`tests/api/sbom.bru`, the Playwright SBOM page test) tolerate both a real SBOM and a missing one for exactly this reason; don't tighten them to assume an SBOM is always present. It also can't cover `sbom-scan`/`generate-sbom`/`deploy`/`pdt-prod`, which need live Azure/Dependency-Track credentials.
+
 ## Production realities
 
 - Nothing runs at request time. Static Web Apps and Blob Storage both serve pre-built files - there is no cold start to hide, and no probe to keep something warm.
