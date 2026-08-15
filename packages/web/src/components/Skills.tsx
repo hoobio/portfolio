@@ -13,21 +13,23 @@ export function Skills({ skills }: { skills: Portfolio['skills'] }) {
     <Section
       id="skills"
       title="skills"
-      caption="Capability groups, by depth of knowledge."
+      caption="Grouped by capability. Deep unless flagged otherwise."
     >
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {skills.map((g) => (
           <div key={g.id} className="rounded-lg border border-bg-elev-2 bg-bg-elev p-4">
             <div className="flex items-baseline justify-between gap-2">
               <h3 className="text-base text-accent-yellow">{g.title}</h3>
-              <span
-                className={clsx(
-                  'rounded-sm border px-1.5 py-0.5 text-[10px] uppercase tracking-wider font-mono',
-                  LEVEL_COLOUR[g.level] ?? '',
-                )}
-              >
-                {g.level}
-              </span>
+              {g.level !== 'deep' ? (
+                <span
+                  className={clsx(
+                    'rounded-sm border px-1.5 py-0.5 text-[10px] uppercase tracking-wider font-mono',
+                    LEVEL_COLOUR[g.level] ?? '',
+                  )}
+                >
+                  {g.level}
+                </span>
+              ) : null}
             </div>
             <ul className="mt-2 flex flex-wrap gap-1 font-mono text-xs">
               {g.skills.map((s) => (

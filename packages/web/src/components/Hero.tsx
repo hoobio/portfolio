@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Profile } from '@hoobi-portfolio/schemas';
 import { TerminalPrompt } from './TerminalPrompt.js';
+import { prefersReducedMotion } from '../lib/scrollDeck.js';
 
 interface HeroProps {
   profile: Profile;
@@ -33,7 +34,8 @@ const POST_LINE_PAUSE_MS = 80;
 
 export function Hero({ profile }: HeroProps) {
   const lines = useMemo(() => makeLines(profile), [profile]);
-  const [index, setIndex] = useState(0);
+  // Reduced motion: skip the typing animation and show the finished output.
+  const [index, setIndex] = useState(() => (prefersReducedMotion() ? lines.length : 0));
   const [typedChars, setTypedChars] = useState(0);
   const done = index >= lines.length;
   const currentLine = lines[index];
@@ -62,7 +64,7 @@ export function Hero({ profile }: HeroProps) {
   }, [index, typedChars, done, lines]);
 
   return (
-    <section id="top" className="pt-8 md:pt-12">
+    <section id="top" className="pt-8 md:pt-12 pb-8">
       <div className="rounded-md border border-bg-elev-2 bg-bg-elev overflow-hidden">
         <WindowsTerminalChrome title="shell" />
         <div className="p-6 md:p-8 font-mono text-sm md:text-base leading-relaxed min-h-[32.5rem]">
@@ -112,6 +114,18 @@ export function Hero({ profile }: HeroProps) {
             })),
           ]}
         />
+      </div>
+      <div className="mt-4 rounded-md border border-bg-elev-2 bg-bg-elev p-5 md:p-6">
+        <div className="font-mono text-sm text-text-mute"># summary</div>
+        <div className="mt-2 space-y-3 text-text">
+          {profile.summary
+            .split(/\n{2,}/u)
+            .map((p) => p.trim())
+            .filter(Boolean)
+            .map((p) => (
+              <p key={p}>{p}</p>
+            ))}
+        </div>
       </div>
     </section>
   );

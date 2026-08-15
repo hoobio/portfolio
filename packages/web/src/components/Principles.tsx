@@ -10,7 +10,7 @@ export function Principles({ principles }: { principles: Portfolio['principles']
     <Section
       id="principles"
       title="principles"
-      caption="The load-bearing ideas behind everything else on this site."
+      caption="How I work. Open a card for the evidence."
     >
       <ul className="grid gap-4 md:grid-cols-2">
         {principles.map((p) => (
