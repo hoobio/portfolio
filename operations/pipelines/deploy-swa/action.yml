@@ -40,7 +40,9 @@ runs:
         repo_token: ${{ github.token }}
         action: upload
         app_location: ${{ inputs.app-location }}
+        # api_location is empty (no managed Functions), so there's no API
+        # build to skip - skip_api_build isn't a valid input on this action
+        # and only produces an "Unexpected input(s)" warning.
         api_location: ''
         output_location: ''
         skip_app_build: true
-        skip_api_build: true
