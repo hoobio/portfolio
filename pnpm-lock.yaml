@@ -7,8 +7,8 @@ settings:
 overrides:
   axios: 1.19.0
   form-data: 4.0.6
-  nanoid: 3.3.18
-  uuid: 11.1.1
+  nanoid: 6.0.1
+  uuid: 14.0.1
   '@faker-js/faker': 10.5.0
 
 importers:
@@ -2796,9 +2796,9 @@ packages:
   nanoclone@0.2.1:
     resolution: {integrity: sha512-wynEP02LmIbLpcYw8uBKpcfF6dmg2vcpKqxeH5UcoKEYdExslsdUA4ugFauuaeYdTB76ez6gJW8XAZ6CgkXYxA==}
 
-  nanoid@3.3.18:
-    resolution: {integrity: sha512-DTg4MJbGMWkfi6VZFdNt2/caMbQy4Ou+Op/hJQvGEWcnVfoA1QA+xzRKAzw9jD6+GVOOeYr/mIcuDSdug6F6+w==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+  nanoid@6.0.1:
+    resolution: {integrity: sha512-3wVS3i51pE2pi1k5FFL/95BGfVS0kSsvDVuGXHOtxox/TywUmtgq+3qiTOTbs9J7KfHaXPiN171k/A6dBnaXFw==}
+    engines: {node: ^22 || ^24 || >=26}
     hasBin: true
 
   neo-async@2.6.2:
@@ -3296,8 +3296,8 @@ packages:
   util@0.10.4:
     resolution: {integrity: sha512-0Pm9hTQ3se5ll1XihRic3FDIku70C+iHUdT/W926rSgHV5QgXsYbKZN8MSC3tJtSkhuROzvsQjAaFENRXr+19A==}
 
-  uuid@11.1.1:
-    resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
+  uuid@14.0.1:
+    resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
     hasBin: true
 
   vite@8.2.1:
@@ -3628,7 +3628,7 @@ snapshots:
       '@smithy/middleware-serde': 4.5.0
       '@smithy/middleware-stack': 4.5.0
       '@smithy/node-config-provider': 4.6.0
-      '@smithy/node-http-handler': 4.5.3
+      '@smithy/node-http-handler': 4.11.0
       '@smithy/protocol-http': 5.6.0
       '@smithy/smithy-client': 4.15.0
       '@smithy/types': 4.17.0
@@ -5103,7 +5103,7 @@ snapshots:
       js-yaml: 4.3.1
       jscodeshift: 17.4.0
       lodash: 4.18.1
-      nanoid: 3.3.18
+      nanoid: 6.0.1
       xml2js: 0.6.2
     transitivePeerDependencies:
       - '@babel/preset-env'
@@ -5136,12 +5136,12 @@ snapshots:
       jsonwebtoken: 9.0.3
       lodash: 4.18.1
       moment: 2.30.1
-      nanoid: 3.3.18
+      nanoid: 6.0.1
       node-fetch: 2.7.0
       path: 0.12.7
       quickjs-emscripten: 0.32.0
       tv4: 1.3.0
-      uuid: 11.1.1
+      uuid: 14.0.1
       xml-formatter: 3.7.0
       xml2js: 0.6.2
       yaml: 2.9.0
@@ -5192,7 +5192,7 @@ snapshots:
 
   '@usebruno/schema@0.28.0':
     dependencies:
-      nanoid: 3.3.18
+      nanoid: 6.0.1
       yup: 0.32.11
 
   '@vitejs/plugin-react@6.0.5(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
@@ -6359,7 +6359,7 @@ snapshots:
 
   nanoclone@0.2.1: {}
 
-  nanoid@3.3.18: {}
+  nanoid@6.0.1: {}
 
   neo-async@2.6.2: {}
 
@@ -6485,7 +6485,7 @@ snapshots:
 
   postcss@8.5.26:
     dependencies:
-      nanoid: 3.3.18
+      nanoid: 6.0.1
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
@@ -6855,7 +6855,7 @@ snapshots:
     dependencies:
       inherits: 2.0.3
 
-  uuid@11.1.1: {}
+  uuid@14.0.1: {}
 
   vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0):
     dependencies:
