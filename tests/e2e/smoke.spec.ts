@@ -42,6 +42,10 @@ test.describe('portfolio smoke', () => {
   test('Swagger UI loads at /docs', async ({ page }) => {
     await page.goto('/docs');
     await expect(page.getByText(/Hoobi Portfolio API/i)).toBeVisible({ timeout: 10_000 });
+    // Swagger UI renders the title fine even when the spec's $refs dangle -
+    // it reports that separately in an "Errors" panel. Assert on the panel
+    // too, or a broken spec ships looking healthy (it did once already).
+    await expect(page.getByText(/Resolver error|Could not resolve/i)).toHaveCount(0);
   });
 
   test('llms.txt is served at root', async ({ request }) => {

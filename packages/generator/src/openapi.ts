@@ -27,15 +27,15 @@ const SECTION_SCHEMAS: Record<string, z.ZodTypeAny> = {
   themes: z.array(Theme),
 };
 
-function jsonSchema(schema: z.ZodTypeAny) {
-  return z.toJSONSchema(schema, { target: 'openapi-3.0' });
-}
-
-function jsonResponse(description: string, schema: z.ZodTypeAny) {
-  return {
-    description,
-    content: { 'application/json': { schema: jsonSchema(schema) } },
-  };
+// zod emits `$ref: "#/definitions/X"`, which resolves from the *document*
+// root. OpenAPI 3.0 keeps shared schemas under `components.schemas`, so the
+// pointers have to be repointed there or every ref dangles. `#/definitions/`
+// only ever appears inside a $ref string, so rewriting the serialised form
+// is both safe and depth-independent.
+function repointRefs<T>(node: T): T {
+  return JSON.parse(
+    JSON.stringify(node).replaceAll('"#/definitions/', '"#/components/schemas/'),
+  ) as T;
 }
 
 function fileResponse(description: string, contentType: string) {
@@ -46,6 +46,30 @@ function fileResponse(description: string, contentType: string) {
 }
 
 export function buildOpenApiDocument(opts: { version: string; apiBaseUrl: string }) {
+  // Shared sub-schemas hoisted out of each zod conversion. zod returns them
+  // on a `definitions` key of the schema it converts; left in place they'd
+  // sit uselessly under paths.*.content.schema.definitions, unreachable from
+  // the refs that point at them.
+  const schemas: Record<string, unknown> = {};
+
+  function jsonSchema(schema: z.ZodTypeAny) {
+    const { definitions, ...rest } = z.toJSONSchema(schema, { target: 'openapi-3.0' }) as Record<
+      string,
+      unknown
+    > & { definitions?: Record<string, unknown> };
+    for (const [name, definition] of Object.entries(definitions ?? {})) {
+      schemas[name] = repointRefs(definition);
+    }
+    return repointRefs(rest);
+  }
+
+  function jsonResponse(description: string, schema: z.ZodTypeAny) {
+    return {
+      description,
+      content: { 'application/json': { schema: jsonSchema(schema) } },
+    };
+  }
+
   const paths: Record<string, unknown> = {
     '/portfolio.json': {
       get: {
@@ -126,5 +150,6 @@ export function buildOpenApiDocument(opts: { version: string; apiBaseUrl: string
       { name: 'system', description: 'System endpoints' },
     ],
     paths,
+    components: { schemas },
   };
 }
