@@ -13,10 +13,13 @@ minimumReleaseAge: 1440
 # Build scripts must be allow-listed explicitly in pnpm v10+. esbuild is
 # transitive now (via tsx and vite, not a direct dependency) but still needs
 # its install-time postinstall to fetch the native binary. protobufjs ships
-# with @bufbuild deps used by playwright tooling.
+# with @bufbuild deps used by playwright tooling. @scarf/scarf (pulled in by
+# swagger-ui-dist) is a telemetry postinstall - deny it explicitly rather
+# than leave it as an unapproved-build failure.
 allowBuilds:
   esbuild: true
   protobufjs: true
+  '@scarf/scarf': false
 
 # Force-resolve transitive axios to the latest stable. axios 1.13.x has
 # three published critical CVEs (CVE-2026-42043, CVE-2026-42044,
