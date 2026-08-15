@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9](https://github.com/hoobio/portfolio/compare/v0.1.8...v0.1.9) (2026-08-15)
+
+
+### Features
+
+* ✨ digestibility and voice pass across the site ([#63](https://github.com/hoobio/portfolio/issues/63)) ([ea7bd45](https://github.com/hoobio/portfolio/commit/ea7bd45af70010641ab5b365b261d22e7e7109ea))
+
 ## [0.1.8](https://github.com/hoobio/portfolio/compare/v0.1.7...v0.1.8) (2026-08-15)
 
 
