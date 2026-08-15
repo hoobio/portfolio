@@ -25,9 +25,13 @@ allowBuilds:
 # @usebruno/cli (the API-test runner, devDependency only - none of this
 # ships in the site bundle), which pins older lines than the fixes.
 #
-# Deliberately staying on the current major for nanoid and uuid: nanoid 4+
-# and uuid 12+ are ESM-only, and Bruno requires them from CJS. The patched
-# releases on the existing major close the advisories without that break.
+# These sit at the current latest major. Bruno loads them from CJS, which is
+# fine: both still ship a CJS build (nanoid index.js, uuid dist-node), so
+# require() from @usebruno/js resolves. Verified, not assumed.
+#
+# Note nanoid 6 declares engines ^22 || ^24 || >=26 - it excludes odd,
+# non-LTS Node releases. CI is on 24 so it's satisfied there, but Node 25
+# locally is out of range and would fail under engine-strict.
 overrides:
   # CVE-2026-42043 / -42044 / -42264, all critical, fixed in 1.16.x.
   axios: 1.19.0
@@ -35,13 +39,13 @@ overrides:
   # field names. Fixed in 4.0.6; Bruno pins 4.0.4.
   form-data: 4.0.6
   # GHSA-28wg-ghj8-5hjv + GHSA-2v37-7h3g-55p8 (high) - generators can loop
-  # indefinitely on zero/negative size. Fixed in 3.3.18; Bruno pins 3.3.8.
-  # vite's postcss already resolves 3.3.18, so this dedupes rather than
-  # adding a second copy.
-  nanoid: 3.3.18
+  # indefinitely on zero/negative size. Bruno pins 3.3.8; fixed from 3.3.18,
+  # taken at the current major. This also pulls vite's postcss copy up from
+  # 3.3.18, so there's still only one nanoid in the tree.
+  nanoid: 6.0.1
   # GHSA-w5hq-g745-h8pq (medium) - missing buffer bounds check in v3/v5/v6.
-  # Fixed in 11.1.1; Bruno pins 10.0.0.
-  uuid: 11.1.1
+  # Bruno pins 10.0.0; fixed from 11.1.1, taken at the current major.
+  uuid: 14.0.1
   # CVE-2026-73231 (high) - faker.helpers.fake reaches the Function
   # constructor from a template, giving arbitrary code execution on
   # attacker-controlled templates. Fixed in 10.5.0; Bruno pins 9.9.0.
