@@ -3,7 +3,9 @@ import { expect, test } from '@playwright/test';
 // The API lives on a separate origin from the site now, so it can't ride
 // Playwright's `baseURL`. Defaults match the local vite-preview setup;
 // PDT (remote) passes API_BASE_URL explicitly.
-const apiBase = process.env.API_BASE_URL ?? 'http://localhost:4173/api';
+// `||` not `??`: the test-pdt composite action passes API_BASE_URL='' for
+// local runs, and an empty string must fall back to the preview server too.
+const apiBase = process.env.API_BASE_URL || 'http://localhost:4173/api';
 
 test.describe('portfolio smoke', () => {
   test('loads the hero with the role headline', async ({ page }) => {

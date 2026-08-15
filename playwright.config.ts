@@ -13,7 +13,7 @@ import { defineConfig, devices } from '@playwright/test';
 // API_BASE_URL directly via process.env for the handful of requests that
 // hit it.
 
-const remoteBaseUrl = process.env.PLAYWRIGHT_BASE_URL ?? 'https://hoobi.dev';
+const remoteBaseUrl = process.env.PLAYWRIGHT_BASE_URL || 'https://hoobi.dev';
 
 export default defineConfig({
   testDir: 'tests/e2e',
