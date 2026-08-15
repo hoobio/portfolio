@@ -16,7 +16,7 @@ describe('api client', () => {
     vi.stubGlobal('fetch', fetchMock);
     const result = await api.portfolio();
     expect(result.profile.name).toBe(portfolioFixture.profile.name);
-    expect(fetchMock).toHaveBeenCalledWith('/api/portfolio', expect.any(Object));
+    expect(fetchMock).toHaveBeenCalledWith('/api/portfolio.json', expect.any(Object));
   });
 
   it('throws when portfolio response is not ok', async () => {

@@ -95,39 +95,16 @@ async function readJson<T>(path: string): Promise<T | undefined> {
   }
 }
 
-async function fetchJson<T>(url: string, timeoutMs = 5_000): Promise<T | undefined> {
-  try {
-    const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), timeoutMs);
-    const resp = await fetch(url, { signal: controller.signal });
-    clearTimeout(t);
-    if (!resp.ok) return undefined;
-    return (await resp.json()) as T;
-  } catch {
-    return undefined;
-  }
-}
-
-export async function loadSbom(
-  path: string,
-  findingsUrl?: string,
-  sbomUrl?: string,
-): Promise<SbomSummaryType | undefined> {
-  // Prefer the blob-hosted SBOM (refreshed every deploy with full image
-  // + OS + workflows coverage). Fall back to the in-image baked SBOM if
-  // the URL is unset or unreachable, then disk-not-found returns
-  // undefined and the route serves a 404.
-  const bom =
-    (sbomUrl ? await fetchJson<CycloneDxBom>(sbomUrl) : undefined) ??
-    (await readJson<CycloneDxBom>(path));
+export async function loadSbom(path: string): Promise<SbomSummaryType | undefined> {
+  // Both files are written locally by earlier CI steps (the syft source
+  // scan, then the Dependency-Track findings pull) before the emitter runs -
+  // no network fetch needed. Disk-not-found returns undefined and the
+  // caller skips emitting sbom.json.
+  const bom = await readJson<CycloneDxBom>(path);
   if (!bom) return undefined;
 
   const sidecarPath = join(dirname(path), 'findings.json');
-  // Prefer remote findings (refreshed every pipeline run) over the
-  // image-baked sidecar. Fall back to the sidecar when no URL is configured.
-  const findings =
-    (findingsUrl ? await fetchJson<Findings>(findingsUrl) : undefined) ??
-    (await readJson<Findings>(sidecarPath));
+  const findings = await readJson<Findings>(sidecarPath);
 
   // Index vulnerabilities by component (purl or name@version) for later merge.
   const vulnsByKey = new Map<string, ComponentVulnerabilityT[]>();

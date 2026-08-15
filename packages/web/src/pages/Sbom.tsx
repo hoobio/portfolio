@@ -1,6 +1,8 @@
 import { Sbom } from '../components/Sbom.js';
+import { apiUrl } from '../api.js';
 
 export function SbomPage() {
+  const rawSbomUrl = apiUrl('sbom.cdx.json');
   return (
     <div className="pt-12 md:pt-20">
       <header className="mb-8 font-mono">
@@ -15,8 +17,8 @@ export function SbomPage() {
           Every dependency that ships in this site, generated as a CycloneDX SBOM at
           build time and (when the pipeline has uploaded it) cross-referenced with
           Dependency-Track findings. The whole document is also available raw at{' '}
-          <a href="/api/sbom/raw" target="_blank" rel="noreferrer" className="font-mono">
-            /api/sbom/raw
+          <a href={rawSbomUrl} target="_blank" rel="noreferrer" className="font-mono">
+            sbom.cdx.json
           </a>
           .
         </p>

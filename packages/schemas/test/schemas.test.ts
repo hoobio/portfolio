@@ -10,7 +10,6 @@ import {
   ContactKind,
   Experience,
   ExperienceList,
-  HealthResponse,
   Portfolio,
   Principle,
   Principles,
@@ -20,6 +19,7 @@ import {
   Profile,
   SbomComponent,
   SbomSummary,
+  SiteVersion,
   SkillGroup,
   Skills,
   Theme,
@@ -278,15 +278,16 @@ describe('SbomSummary', () => {
   });
 });
 
-describe('HealthResponse', () => {
+describe('SiteVersion', () => {
   it('parses ok', () => {
-    expect(HealthResponse.parse({ status: 'ok', uptimeSeconds: 1, version: '1.0' }).version).toBe(
-      '1.0',
-    );
+    expect(
+      SiteVersion.parse({ status: 'ok', version: '1.0', generatedAt: '2026-05-22T00:00:00.000Z' })
+        .version,
+    ).toBe('1.0');
   });
   it('rejects non-ok status', () => {
     expect(() =>
-      HealthResponse.parse({ status: 'down', uptimeSeconds: 1, version: '1.0' }),
+      SiteVersion.parse({ status: 'down', version: '1.0', generatedAt: '2026-05-22T00:00:00.000Z' }),
     ).toThrow();
   });
 });

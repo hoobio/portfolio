@@ -1,36 +1,31 @@
 name: Build site bundle + SBOM
-description: Builds the web + api packages, generates the CycloneDX SBOM, exposes a build summary.
+description: >-
+  Generates the source CycloneDX SBOM, then builds schemas + generator + web.
+  The SBOM must exist before the build runs - the generator bakes it into
+  sbom.json.
 
 outputs:
   sbom-path:
     description: Path to the generated CycloneDX SBOM
-    value: packages/api/public/sbom.cdx.json
+    value: packages/generator/sbom/sbom.cdx.json
 
 runs:
   using: composite
   steps:
-    - name: pnpm run build
-      shell: bash
-      run: pnpm run build
-
-    - name: Stage SPA into api/public/web (for start:api to serve)
-      shell: bash
-      run: |
-        set -euo pipefail
-        rm -rf packages/api/public/web
-        mkdir -p packages/api/public/web
-        cp -R packages/web/dist/. packages/api/public/web/
-
     # pnpm-lock.yaml drives the npm component list (via syft's
     # javascript-lock-cataloger); scan-github-actions-path adds the actions
-    # this repo's workflows reference. No image scan here - that happens
-    # post-publish in the generate-sbom job and adds the OS layer for DT.
+    # this repo's workflows reference. Source-only now - there's no runtime
+    # container to add an OS layer to.
     - uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
       with:
         app-language: node
         app-manifest-path: .
         scan-github-actions-path: .github/workflows
-        output-path: packages/api/public/sbom.cdx.json
+        output-path: packages/generator/sbom/sbom.cdx.json
+
+    - name: pnpm run build
+      shell: bash
+      run: pnpm run build
 
     - name: Build summary
       shell: bash
@@ -38,10 +33,10 @@ runs:
         {
           echo "## Build artifacts"
           echo
-          du -sh packages/web/dist 2>/dev/null | awk '{print "- web bundle: " $0}'
-          du -sh packages/api/dist 2>/dev/null | awk '{print "- api bundle: " $0}'
-          if [ -f packages/api/public/sbom.cdx.json ]; then
-            count=$(jq '.components | length' packages/api/public/sbom.cdx.json 2>/dev/null || echo unknown)
+          du -sh packages/web/dist 2>/dev/null | awk '{print "- site bundle: " $0}'
+          du -sh packages/generator/dist-api 2>/dev/null | awk '{print "- API payload: " $0}'
+          if [ -f packages/generator/sbom/sbom.cdx.json ]; then
+            count=$(jq '.components | length' packages/generator/sbom/sbom.cdx.json 2>/dev/null || echo unknown)
             echo "- SBOM components: $count"
           fi
         } >> "$GITHUB_STEP_SUMMARY"

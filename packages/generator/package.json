@@ -1,27 +1,28 @@
 {
-  "name": "@hoobi-portfolio/schemas",
+  "name": "@hoobi-portfolio/generator",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts"
-  },
   "scripts": {
-    "build": "tsc -p tsconfig.json --noEmit",
+    "build": "tsx src/emit-static.ts",
+    "dev": "tsx watch --include ../../data/** --include ./sbom/** src/emit-static.ts",
     "lint": "oxlint src",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@hoobi-portfolio/schemas": "workspace:*",
+    "swagger-ui-dist": "5.32.13",
+    "yaml": "2.9.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@types/node": "26.2.0",
     "@vitest/coverage-v8": "4.1.10",
     "oxlint": "1.78.0",
+    "tsx": "4.23.12",
     "typescript": "7.0.2",
     "vitest": "4.1.10"
   }

@@ -1,0 +1,46 @@
+name: Deploy Static Web App
+description: >-
+  Fetches a fresh deployment token via the active `az login` OIDC session and
+  pushes the built SPA to Azure Static Web Apps. No standing SWA secret is
+  stored in GitHub - the token is pulled at run time and self-heals if it's
+  ever rotated in the portal.
+
+inputs:
+  resource-group:
+    description: Resource group containing the Static Web App
+    required: true
+  site-name:
+    description: Static Web App resource name
+    required: true
+  app-location:
+    description: Directory to publish (the built SPA)
+    required: false
+    default: packages/web/dist
+
+runs:
+  using: composite
+  steps:
+    - name: Fetch deployment token
+      id: token
+      shell: bash
+      env:
+        RESOURCE_GROUP: ${{ inputs.resource-group }}
+        SITE_NAME: ${{ inputs.site-name }}
+      run: |
+        set -euo pipefail
+        TOKEN=$(az staticwebapp secrets list \
+          --name "$SITE_NAME" --resource-group "$RESOURCE_GROUP" \
+          --query 'properties.apiKey' -o tsv)
+        echo "::add-mask::$TOKEN"
+        echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+    - uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ steps.token.outputs.token }}
+        repo_token: ${{ github.token }}
+        action: upload
+        app_location: ${{ inputs.app-location }}
+        api_location: ''
+        output_location: ''
+        skip_app_build: true
+        skip_api_build: true

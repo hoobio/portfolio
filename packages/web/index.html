@@ -13,10 +13,15 @@
     />
     <meta name="author" content="Alex Hill" />
 
-    <!-- AI-friendly hints. The /api/portfolio endpoint is the canonical
-         machine-readable view of this site. llms.txt at the root follows the
-         emerging llmstxt.org convention. -->
-    <link rel="alternate" type="application/json" title="Portfolio JSON" href="/api/portfolio" />
+    <!-- AI-friendly hints. portfolio.json (on the API origin) is the
+         canonical machine-readable view of this site. llms.txt at the root
+         follows the emerging llmstxt.org convention. -->
+    <link
+      rel="alternate"
+      type="application/json"
+      title="Portfolio JSON"
+      href="%VITE_API_BASE_URL%/portfolio.json"
+    />
     <link rel="alternate" type="text/plain" title="LLM-friendly summary" href="/llms.txt" />
 
     <meta property="og:type" content="profile" />

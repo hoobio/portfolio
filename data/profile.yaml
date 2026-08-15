@@ -48,8 +48,8 @@ contact:
     value: https://www.linkedin.com/in/alex-h-905a8990/
     display: linkedin.com/in/alex-h-905a8990
   - kind: website
-    value: https://hoobi.io
-    display: hoobi.io
+    value: https://hoobi.dev
+    display: hoobi.dev
 
 availability:
   status: open-to-conversations

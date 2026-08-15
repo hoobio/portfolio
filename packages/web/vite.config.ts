@@ -1,18 +1,20 @@
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { siteAssets } from './vite-plugins/site-assets.js';
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    siteAssets({
+      apiDir: resolve(import.meta.dirname, '../generator/dist-api'),
+      siteDir: resolve(import.meta.dirname, '../generator/dist-site'),
+    }),
+  ],
   server: {
     port: 5173,
-    proxy: {
-      '/api': 'http://localhost:8090',
-      '/docs': 'http://localhost:8090',
-      '/llms.txt': 'http://localhost:8090',
-      '/sitemap.xml': 'http://localhost:8090',
-      '/robots.txt': 'http://localhost:8090',
-    },
   },
   build: {
     outDir: 'dist',

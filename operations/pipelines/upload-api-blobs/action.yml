@@ -1,0 +1,70 @@
+name: Upload static API to Blob Storage
+description: >-
+  Publishes the generator's output (packages/generator/dist-api) to the
+  public-read blob container that api.hoobi.dev serves from. Requires an
+  active `az login` session with Storage Blob Data Contributor on the
+  account.
+
+inputs:
+  account-name:
+    description: Storage account name
+    required: true
+  container:
+    description: Blob container name
+    required: false
+    default: portfolio
+  source:
+    description: Local directory to publish (the generator's API output)
+    required: false
+    default: packages/generator/dist-api
+
+runs:
+  using: composite
+  steps:
+    - name: Upload API payload
+      shell: bash
+      env:
+        ACCOUNT: ${{ inputs.account-name }}
+        CONTAINER: ${{ inputs.container }}
+        SRC: ${{ inputs.source }}
+      run: |
+        set -euo pipefail
+
+        if [ ! -d "$SRC" ]; then
+          echo "::error::source directory '$SRC' does not exist - run the build first"
+          exit 1
+        fi
+
+        CACHE='public, max-age=60, s-maxage=300, stale-while-revalidate=600'
+        NO_CACHE='no-cache, no-store, must-revalidate'
+
+        # Broadest patterns first, narrower ones after so they overwrite with
+        # the right content-type (az's --pattern uses fnmatch, where `*`
+        # crosses `/` - `*.json` also matches `portfolio/profile.json`).
+        az storage blob upload-batch -d "$CONTAINER" -s "$SRC" --account-name "$ACCOUNT" \
+          --pattern '*.json' --content-type 'application/json' --content-cache "$CACHE" \
+          --auth-mode login --overwrite
+
+        az storage blob upload-batch -d "$CONTAINER" -s "$SRC" --account-name "$ACCOUNT" \
+          --pattern '*.yaml' --content-type 'application/yaml; charset=utf-8' --content-cache "$CACHE" \
+          --auth-mode login --overwrite
+
+        az storage blob upload-batch -d "$CONTAINER" -s "$SRC" --account-name "$ACCOUNT" \
+          --pattern '*.cdx.json' --content-type 'application/vnd.cyclonedx+json' --content-cache "$CACHE" \
+          --auth-mode login --overwrite
+
+        # version.json must never be cached - it is the freshness signal
+        # external monitors and the deploy job's own readiness check poll.
+        if [ -f "$SRC/version.json" ]; then
+          az storage blob upload -c "$CONTAINER" -f "$SRC/version.json" -n version.json \
+            --account-name "$ACCOUNT" --content-type 'application/json' --content-cache "$NO_CACHE" \
+            --auth-mode login --overwrite
+        fi
+
+        {
+          echo "## API payload published"
+          echo
+          echo "- Account: $ACCOUNT"
+          echo "- Container: $CONTAINER"
+          echo "- Files: $(find "$SRC" -type f | wc -l)"
+        } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,33 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "/fonts/*", "/docs/*", "/*.{json,xml,txt,svg,png,ico,js,css,map,ttf}"]
+  },
+  "routes": [
+    { "route": "/docs", "rewrite": "/docs/index.html" },
+    { "route": "/assets/*", "headers": { "Cache-Control": "public, max-age=31536000, immutable" } },
+    { "route": "/fonts/*", "headers": { "Cache-Control": "public, max-age=31536000, immutable" } },
+    { "route": "/index.html", "headers": { "Cache-Control": "no-cache" } },
+    { "route": "/version.json", "headers": { "Cache-Control": "no-cache" } },
+    { "route": "/robots.txt", "headers": { "Cache-Control": "public, max-age=3600" } },
+    { "route": "/sitemap.xml", "headers": { "Cache-Control": "public, max-age=3600" } },
+    { "route": "/llms.txt", "headers": { "Cache-Control": "public, max-age=3600" } }
+  ],
+  "mimeTypes": {
+    ".yaml": "application/yaml",
+    ".json": "application/json",
+    ".ttf": "font/ttf",
+    ".webmanifest": "application/manifest+json"
+  },
+  "globalHeaders": {
+    "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "geolocation=(), camera=(), microphone=()",
+    "Content-Security-Policy": "default-src 'self'; connect-src 'self' https://api.hoobi.dev https://api.github.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'; form-action 'none'"
+  },
+  "responseOverrides": {
+    "404": { "rewrite": "/index.html", "statusCode": 200 }
+  }
+}

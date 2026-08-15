@@ -1,4 +1,5 @@
 import type { Profile } from '@hoobi-portfolio/schemas';
+import { apiUrl } from '../api.js';
 
 interface FooterProps {
   profile: Profile;
@@ -12,14 +13,14 @@ export function Footer({ profile, generatedAt }: FooterProps) {
         <div>
           <span className="text-accent-red">$</span>{' '}
           <span className="text-text-dim">echo</span>{' '}
-          <span className="text-accent-cyan">"built from data, served by fastify"</span>
+          <span className="text-accent-cyan">"built from data, served as static files"</span>
         </div>
         <div>
           <a href="https://github.com/hoobio/portfolio" target="_blank" rel="noreferrer">
             source
           </a>
           {' · '}
-          <a href="/api/portfolio" target="_blank" rel="noreferrer">/api/portfolio</a>
+          <a href={apiUrl('portfolio.json')} target="_blank" rel="noreferrer">portfolio.json</a>
           {' · '}
           <a href="/llms.txt" target="_blank" rel="noreferrer">/llms.txt</a>
           {' · '}
