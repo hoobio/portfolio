@@ -39,9 +39,17 @@ resource apiStorage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
     allowBlobPublicAccess: true
     minimumTlsVersion: 'TLS1_2'
     supportsHttpsTrafficOnly: true
-    allowSharedKeyAccess: true
+    // Live account has shared-key auth disabled and CI uploads with
+    // `--auth-mode login` (OIDC), so declaring `true` here would silently
+    // re-enable key-based access on every deploy.
+    allowSharedKeyAccess: false
     publicNetworkAccess: 'Enabled'
-    customDomain: { name: apiCustomDomain, useSubDomainName: false }
+    // Indirect (asverify) CNAME validation. api.hoobi.dev is proxied through
+    // Cloudflare, so it resolves to Cloudflare IPs, not to
+    // hoobiportfolioapi.blob.core.windows.net - direct validation fails
+    // preflight with StorageDomainNameCouldNotVerify. Azure verifies against
+    // the asverify.api.hoobi.dev CNAME instead, which stays unproxied.
+    customDomain: { name: apiCustomDomain, useSubDomainName: true }
   }
 }
 
