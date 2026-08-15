@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/hoobio/portfolio/compare/v0.1.9...v0.1.10) (2026-08-15)
+
+
+### Features
+
+* ✨ add years in industry and DevOps to the summary ([#65](https://github.com/hoobio/portfolio/issues/65)) ([cd3869b](https://github.com/hoobio/portfolio/commit/cd3869b58856e11a101a3998d7e5d0adf2fb54fc))
+
 ## [0.1.9](https://github.com/hoobio/portfolio/compare/v0.1.8...v0.1.9) (2026-08-15)
 
 
