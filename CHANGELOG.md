@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/hoobio/portfolio/compare/v0.1.10...v0.1.11) (2026-08-15)
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency @faker-js/faker to v10.6.0 ([#67](https://github.com/hoobio/portfolio/issues/67)) ([f4dc89c](https://github.com/hoobio/portfolio/commit/f4dc89ccbb1e655f00951a185240085f988bd614))
+
 ## [0.1.10](https://github.com/hoobio/portfolio/compare/v0.1.9...v0.1.10) (2026-08-15)
 
 
