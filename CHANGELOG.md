@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.11](https://github.com/hoobio/portfolio/compare/v0.1.10...v0.1.11) (2026-09-09)
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency @faker-js/faker to v10.6.0 ([#67](https://github.com/hoobio/portfolio/issues/67)) ([f4dc89c](https://github.com/hoobio/portfolio/commit/f4dc89ccbb1e655f00951a185240085f988bd614))
+* **deps:** update dependency vitest to v4.1.11 [security] ([#72](https://github.com/hoobio/portfolio/issues/72)) ([52b1fd0](https://github.com/hoobio/portfolio/commit/52b1fd0e21e75066ff67d65ec081accbc7c04af0))
+
 ## [0.1.10](https://github.com/hoobio/portfolio/compare/v0.1.9...v0.1.10) (2026-08-15)
 
 
