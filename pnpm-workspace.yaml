@@ -52,3 +52,6 @@ overrides:
   # 10.6.0 exists but is still inside the 24h minimumReleaseAge window
   # above; bump when it ages out if there's a reason to.
   '@faker-js/faker': 10.6.0
+minimumReleaseAgeExclude:
+  # Renovate security update: vitest@4.1.11
+  - vitest@4.1.11
