@@ -16,7 +16,7 @@
     "@hoobi-portfolio/schemas": "workspace:*",
     "swagger-ui-dist": "5.32.13",
     "yaml": "2.9.0",
-    "zod": "4.4.3"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@types/node": "26.2.0",
