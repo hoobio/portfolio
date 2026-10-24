@@ -42,10 +42,10 @@ overrides:
   # indefinitely on zero/negative size. Bruno pins 3.3.8; fixed from 3.3.18,
   # taken at the current major. This also pulls vite's postcss copy up from
   # 3.3.18, so there's still only one nanoid in the tree.
-  nanoid: 6.0.1
+  nanoid: 6.0.2
   # GHSA-w5hq-g745-h8pq (medium) - missing buffer bounds check in v3/v5/v6.
   # Bruno pins 10.0.0; fixed from 11.1.1, taken at the current major.
-  uuid: 14.0.1
+  uuid: 14.0.3
   # CVE-2026-73231 (high) - faker.helpers.fake reaches the Function
   # constructor from a template, giving arbitrary code execution on
   # attacker-controlled templates. Fixed in 10.5.0; Bruno pins 9.9.0.
