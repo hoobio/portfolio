@@ -111,7 +111,7 @@ jobs:
 
       - if: always()
         name: Upload coverage artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-${{ github.run_id }}
           path: packages/*/coverage/
@@ -130,7 +130,7 @@ jobs:
         uses: ./operations/pipelines/build-bundle
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: build-${{ github.run_id }}
           # upload-artifact roots the archive at the least common ancestor of
@@ -184,12 +184,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
           languages: javascript-typescript
           build-mode: none
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
           category: "/language:javascript-typescript"
 
@@ -275,14 +275,14 @@ jobs:
       # runtime image to add a second scan pass for). Reuse that artefact.
       - name: Download build artifact
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: build-${{ github.run_id }}
           path: build-artifact
 
       - name: Upload SBOM to Dependency-Track (channel=pr)
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@353f3a7d09d9e63ae303631a4a4bb1ac83f97635 # v2.4.0
         with:
           bom-path: build-artifact/generator/sbom/sbom.cdx.json
           upload-artifact: 'false'
@@ -303,7 +303,7 @@ jobs:
 
       - name: DT findings + PR gate
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/step/dt-findings-pr-gate@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
+        uses: hoobio/pipeline-tools/pipeline/github/step/dt-findings-pr-gate@353f3a7d09d9e63ae303631a4a4bb1ac83f97635 # v2.4.0
         with:
           server-url: https://${{ env.DT_HOST }}
           api-key: ${{ env.DT_API_KEY }}
@@ -320,7 +320,7 @@ jobs:
 
       - name: Upload HTML findings report
         if: always() && env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dt-findings
           path: dt-findings.html
@@ -350,7 +350,7 @@ jobs:
       # fire. The App token is unaffected.
       - name: Run release-please with App token
         id: rp
-        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
+        uses: hoobio/pipeline-tools/pipeline/github/step/release-please@353f3a7d09d9e63ae303631a4a4bb1ac83f97635 # v2.4.0
         with:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
           app-private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
@@ -409,7 +409,7 @@ jobs:
       # scan here keeps this job self-contained rather than reaching across
       # jobs for an artifact just to re-derive the version below.
       - name: Build CycloneDX SBOM (source scan)
-        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
+        uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@353f3a7d09d9e63ae303631a4a4bb1ac83f97635 # v2.4.0
         with:
           app-language: node
           app-manifest-path: .
@@ -417,7 +417,7 @@ jobs:
           output-path: packages/generator/sbom/sbom.cdx.json
 
       - name: Upload SBOM artifact (for release attachment + deploy job)
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sbom
           path: packages/generator/sbom/sbom.cdx.json
@@ -431,7 +431,7 @@ jobs:
 
       - name: Upload SBOM to Dependency-Track
         if: env.DT_HOST != '' && env.DT_API_KEY != ''
-        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
+        uses: hoobio/pipeline-tools/pipeline/github/job/upload-sbom-to-dependency-track@353f3a7d09d9e63ae303631a4a4bb1ac83f97635 # v2.4.0
         with:
           bom-path: packages/generator/sbom/sbom.cdx.json
           upload-artifact: 'false'
@@ -462,7 +462,7 @@ jobs:
 
       - name: Upload findings artifact
         if: steps.findings.outputs.findings-path != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: findings
           path: ${{ steps.findings.outputs.findings-path }}
@@ -479,7 +479,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Download SBOM
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: sbom
           path: release
@@ -524,14 +524,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Download SBOM
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: sbom
           path: packages/generator/sbom
 
       - name: Download DT findings (optional)
         continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: findings
           path: packages/generator/sbom
@@ -556,7 +556,7 @@ jobs:
           pnpm run build
 
       - name: Azure login (OIDC)
-        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -614,7 +614,7 @@ jobs:
       # authored by the release-please App), so mint an App token here too.
       - name: Mint release-please App token
         id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           app-id: ${{ vars.RELEASE_PLEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}

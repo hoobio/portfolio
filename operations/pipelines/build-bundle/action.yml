@@ -16,7 +16,7 @@ runs:
     # javascript-lock-cataloger); scan-github-actions-path adds the actions
     # this repo's workflows reference. Source-only now - there's no runtime
     # container to add an OS layer to.
-    - uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@e751f36b5c779fb2884a0ca37bf18688346c5104 # v2.3.1
+    - uses: hoobio/pipeline-tools/pipeline/github/step/build-cyclonedx-sbom@353f3a7d09d9e63ae303631a4a4bb1ac83f97635 # v2.4.0
       with:
         app-language: node
         app-manifest-path: .
