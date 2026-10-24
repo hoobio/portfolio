@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.11](https://github.com/hoobio/portfolio/compare/v0.1.10...v0.1.11) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** 🐛 pin handlebars 4.7.10 for two critical advisories ([#77](https://github.com/hoobio/portfolio/issues/77)) ([cfd40f2](https://github.com/hoobio/portfolio/commit/cfd40f20b1b70148bfcbc8a9c3fc761b5bc160dd))
+
+
+### Miscellaneous Chores
+
+* 🔧 drop the Renovate vulnerability setting now set globally ([#76](https://github.com/hoobio/portfolio/issues/76)) ([df59488](https://github.com/hoobio/portfolio/commit/df594885a397a47d9b94e1f0798d9409e872d15d))
+* **deps:** lock file maintenance ([#69](https://github.com/hoobio/portfolio/issues/69)) ([1b905ef](https://github.com/hoobio/portfolio/commit/1b905ef5406dfbf3971b425b7e676106a64d5e94))
+* **deps:** update dependency @faker-js/faker to v10.6.0 ([#67](https://github.com/hoobio/portfolio/issues/67)) ([f4dc89c](https://github.com/hoobio/portfolio/commit/f4dc89ccbb1e655f00951a185240085f988bd614))
+* **deps:** update dependency vite to v8.2.4 [security] ([#74](https://github.com/hoobio/portfolio/issues/74)) ([f331687](https://github.com/hoobio/portfolio/commit/f3316870a2834a4358a77982f57a2873e7c4004b))
+* **deps:** update dependency vitest to v4.1.11 [security] ([#72](https://github.com/hoobio/portfolio/issues/72)) ([52b1fd0](https://github.com/hoobio/portfolio/commit/52b1fd0e21e75066ff67d65ec081accbc7c04af0))
+
 ## [0.1.10](https://github.com/hoobio/portfolio/compare/v0.1.9...v0.1.10) (2026-08-15)
 
 
