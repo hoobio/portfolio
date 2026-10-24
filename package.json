@@ -1,6 +1,6 @@
 {
   "name": "hoobi-portfolio",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "private": true,
   "description": "Living resume and portfolio. Data-driven, pre-rendered to static JSON at build time and served by a React front end.",
   "license": "MIT",
