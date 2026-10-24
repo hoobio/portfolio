@@ -52,6 +52,8 @@ overrides:
   # 10.6.0 exists but is still inside the 24h minimumReleaseAge window
   # above; bump when it ages out if there's a reason to.
   '@faker-js/faker': 10.6.0
+  # GHSA-8r5x-fm3f-whwj + GHSA-p8wg-vrv2-v86f (critical) - fixed in 4.7.10; @usebruno/js pins ^4.7.9.
+  handlebars: 4.7.10
 minimumReleaseAgeExclude:
   # Renovate security update: vitest@4.1.11
   - vitest@4.1.11
