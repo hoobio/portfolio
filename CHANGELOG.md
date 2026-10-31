@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.1.11](https://github.com/hoobio/portfolio/compare/v0.1.10...v0.1.11) (2026-10-31)
+
+
+### Bug Fixes
+
+* **deps:** 🐛 pin handlebars 4.7.10 for two critical advisories ([#77](https://github.com/hoobio/portfolio/issues/77)) ([cfd40f2](https://github.com/hoobio/portfolio/commit/cfd40f20b1b70148bfcbc8a9c3fc761b5bc160dd))
+* **deps:** update dependency react-router-dom to v7.18.5 ([#83](https://github.com/hoobio/portfolio/issues/83)) ([7a2ecf1](https://github.com/hoobio/portfolio/commit/7a2ecf16a8226b24d774ba29b50128a00b08ff5a))
+* **deps:** update dependency swagger-ui-dist to v5.34.1 ([#87](https://github.com/hoobio/portfolio/issues/87)) ([0e06ba7](https://github.com/hoobio/portfolio/commit/0e06ba76071d4e4345635f531f44d8388d09f483))
+
+
+### Miscellaneous Chores
+
+* 🔧 drop the Renovate vulnerability setting now set globally ([#76](https://github.com/hoobio/portfolio/issues/76)) ([df59488](https://github.com/hoobio/portfolio/commit/df594885a397a47d9b94e1f0798d9409e872d15d))
+* 🔧 stop Renovate automerging non-major updates ([#86](https://github.com/hoobio/portfolio/issues/86)) ([c163a26](https://github.com/hoobio/portfolio/commit/c163a26b7098f684e00e7ec4be6f6ce1afc1ed66))
+* **deps:** lock file maintenance ([#69](https://github.com/hoobio/portfolio/issues/69)) ([1b905ef](https://github.com/hoobio/portfolio/commit/1b905ef5406dfbf3971b425b7e676106a64d5e94))
+* **deps:** lock file maintenance ([#78](https://github.com/hoobio/portfolio/issues/78)) ([f3b3aa4](https://github.com/hoobio/portfolio/commit/f3b3aa496b8be5c57cebfd99a79908e7771ab792))
+* **deps:** update dependency @faker-js/faker to v10.6.0 ([#67](https://github.com/hoobio/portfolio/issues/67)) ([f4dc89c](https://github.com/hoobio/portfolio/commit/f4dc89ccbb1e655f00951a185240085f988bd614))
+* **deps:** update dependency @types/node to v26.6.6 ([#84](https://github.com/hoobio/portfolio/issues/84)) ([f008674](https://github.com/hoobio/portfolio/commit/f0086748785d4af3b9f095fa13c5ec4a38f66a1b))
+* **deps:** update dependency axios to v1.21.0 ([#80](https://github.com/hoobio/portfolio/issues/80)) ([54e9c5a](https://github.com/hoobio/portfolio/commit/54e9c5af162e642fe57643e7e6e878a5f4c3d754))
+* **deps:** update dependency oxlint to v1.90.0 ([#79](https://github.com/hoobio/portfolio/issues/79)) ([f9f1440](https://github.com/hoobio/portfolio/commit/f9f1440f713254026b858d0bd1bae35d54d0738a))
+* **deps:** update dependency vite to v8.2.4 [security] ([#74](https://github.com/hoobio/portfolio/issues/74)) ([f331687](https://github.com/hoobio/portfolio/commit/f3316870a2834a4358a77982f57a2873e7c4004b))
+* **deps:** update dependency vitest to v4.1.11 [security] ([#72](https://github.com/hoobio/portfolio/issues/72)) ([52b1fd0](https://github.com/hoobio/portfolio/commit/52b1fd0e21e75066ff67d65ec081accbc7c04af0))
+* **deps:** update pnpm to v12.16.0 ([#81](https://github.com/hoobio/portfolio/issues/81)) ([a8a6861](https://github.com/hoobio/portfolio/commit/a8a6861c0a4df291cdfb8717f337f9a0f8fda296))
+* **deps:** update pnpm to v12.16.1 ([#82](https://github.com/hoobio/portfolio/issues/82)) ([0c6d56a](https://github.com/hoobio/portfolio/commit/0c6d56adb81131a44c1128dcff0ee636e8347498))
+
+
+### Build System
+
+* 📦 disable package install scripts ([#85](https://github.com/hoobio/portfolio/issues/85)) ([93fca44](https://github.com/hoobio/portfolio/commit/93fca44e04faeedefa1715a65f730dd61aaaad60))
+
 ## [0.1.10](https://github.com/hoobio/portfolio/compare/v0.1.9...v0.1.10) (2026-08-15)
 
 
