@@ -11,14 +11,14 @@ packages:
 minimumReleaseAge: 1440
 
 # Build scripts must be allow-listed explicitly in pnpm v10+. esbuild is
-# transitive now (via tsx and vite, not a direct dependency) but still needs
-# its install-time postinstall to fetch the native binary. protobufjs ships
-# with @bufbuild deps used by playwright tooling. @scarf/scarf (pulled in by
+# transitive now (via tsx and vite, not a direct dependency) and ships its
+# native binary via optionalDependencies, so no script is needed. protobufjs
+# (playwright tooling) needs none either. @scarf/scarf (pulled in by
 # swagger-ui-dist) is a telemetry postinstall - deny it explicitly rather
 # than leave it as an unapproved-build failure.
 allowBuilds:
-  esbuild: true
-  protobufjs: true
+  esbuild: false
+  protobufjs: false
   '@scarf/scarf': false
 
 # Force-resolve vulnerable transitives. Every entry here is pulled in by
