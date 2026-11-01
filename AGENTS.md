@@ -47,12 +47,9 @@ Place new pipeline logic in `operations/pipelines/`. `.github/workflows/` should
 
   Types follow the [Conventional Commits](https://www.conventionalcommits.org/) spec: `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `revert`. release-please reads these to decide version bumps - lone gitmoji prefixes (e.g. `🐛 fix typo`) don't parse and break the release flow.
 - **Branch protection on `main`**: required checks are Lint, Typecheck, Unit Tests and Coverage, Build, UI Tests, API Tests. Do not weaken these, or the job `name:` values in `ci.yml` that they match against, without a reason captured in the PR description.
-- **Prose**: no em-dashes anywhere (use space-hyphen-space or restructure). Commonwealth English. No AI slop ("delve", "navigate", binary contrasts, vague declaratives). Same rule applies to commit messages and inline code comments.
-- **Comments in code**: only where the *why* is non-obvious. Don't narrate what the code already says.
 
 ## Hard rules
 
-- **Never push directly to `main`**: open a PR, let CI pass, merge.
 - **Never bake secrets into the repo**: tenant, subscription, client IDs go in GitHub Actions secrets on the `azure` environment, not in YAML or code.
 - **Never expose internal hostnames, internal product names, or workplace-specific terms** in the YAML data. Genericise (e.g. "internal MCP service") if needed.
 - **Never break the data contract**: schemas in `packages/schemas/src/index.ts` are the API contract. Changing them requires updating the YAML, the fixtures in `packages/{generator,web}/test/fixtures.ts` (where present), and the consumer components.
