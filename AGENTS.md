@@ -51,7 +51,7 @@ Place new pipeline logic in `operations/pipelines/`. `.github/workflows/` should
 ## Hard rules
 
 - **Never bake secrets into the repo**: tenant, subscription, client IDs go in GitHub Actions secrets on the `azure` environment, not in YAML or code.
-- **Never expose internal hostnames, internal product names, or workplace-specific terms** in the YAML data. Genericise (e.g. "internal MCP service") if needed.
+- **The profile and experience data are intentionally public**: name, email, LinkedIn, employer and city are a CV. Internal hostnames and internal product names stay out of the YAML data; genericise them (e.g. "internal MCP service").
 - **Never break the data contract**: schemas in `packages/schemas/src/index.ts` are the API contract. Changing them requires updating the YAML, the fixtures in `packages/{generator,web}/test/fixtures.ts` (where present), and the consumer components.
 - **Never add a second data producer**: `packages/generator/src/emit-static.ts` is the only thing that writes the static API. Components read it through `apiUrl()` in `packages/web/src/api.ts` - never hardcode an `/api/...` path in a component.
 - **Do not regress the security posture**: the blob container is read-only public with no write access from the client, storage is HTTPS-only, `staticwebapp.config.json` carries the security headers (HSTS, CSP, `X-Frame-Options`, etc.) that used to come from Cloudflare/Fastify defaults, and there is no standing deployment secret - the Static Web Apps token is fetched fresh from Azure at deploy time via OIDC.
